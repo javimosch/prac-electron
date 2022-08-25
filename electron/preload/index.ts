@@ -1,8 +1,21 @@
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
   loadPreferences: () => ipcRenderer.invoke("load-prefs"),
-  selectSourceFolders: () =>
-    <Promise<any>>ipcRenderer.invoke("selectSourceFolders"),
+  selectMultipleFolders: () =>
+    <Promise<any>>ipcRenderer.invoke("selectMultipleFolders"),
+  selectSingleFolder: () =>
+    <Promise<any>>ipcRenderer.invoke("selectMultipleFolders"),
+  analyzeSources: (sources: String[] = [], options: any) =>
+    <Promise<any>>ipcRenderer.invoke("analyzeSources", sources, options),
+  onEvent: (callback: Function) => {
+    let listener = (event, message) => {
+      callback(message);
+    };
+    ipcRenderer.on("event", listener);
+    return () => {
+      ipcRenderer.removeListener("event", listener);
+    };
+  },
 });
 
 function domReady(

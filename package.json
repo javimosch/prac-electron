@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "vite",
     "build": "cross-env NODE_ENV=production vue-tsc --noEmit && vite build && electron-builder",
-    "docker": "docker run --rm -ti --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS_TAG|TRAVIS|TRAVIS_REPO_|TRAVIS_BUILD_|TRAVIS_BRANCH|TRAVIS_PULL_REQUEST_|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') --env ELECTRON_CACHE=\"/root/.cache/electron\" --env ELECTRON_BUILDER_CACHE=\"/root/.cache/electron-builder\" -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.cache/electron:/root/.cache/electron -v ~/.cache/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine npm run build"
+    "build:docker": "npm ci && cross-env NODE_ENV=production vite build && electron-builder",
+    "docker": "docker run --rm -ti --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS_TAG|TRAVIS|TRAVIS_REPO_|TRAVIS_BUILD_|TRAVIS_BRANCH|TRAVIS_PULL_REQUEST_|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') --env ELECTRON_CACHE=\"/root/.cache/electron\" --env ELECTRON_BUILDER_CACHE=\"/root/.cache/electron-builder\" -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.cache/electron:/root/.cache/electron -v ~/.cache/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine npm run build:docker"
   },
   "build": {
     "appId": "com.lunardog.prakelectron",
@@ -43,6 +44,7 @@
     "@vicons/material": "^0.12.0",
     "@vicons/utils": "^0.1.4",
     "@vitejs/plugin-vue": "^2.3.3",
+    "@vue/devtools": "^6.2.1",
     "cross-env": "^7.0.3",
     "electron": "^19.0.8",
     "electron-builder": "^23.1.0",
@@ -68,7 +70,14 @@
     "vue"
   ],
   "dependencies": {
+    "checksum": "^1.0.0",
+    "empty-dir": "^2.0.0",
+    "md5-file": "^5.0.0",
+    "node-readfiles": "^0.3.1",
     "pug": "^3.0.2",
-    "sander": "^0.6.0"
+    "recursive-readdir-async": "^1.2.1",
+    "sander": "^0.6.0",
+    "sass": "^1.54.4",
+    "sha-anything": "^0.0.2"
   }
 }

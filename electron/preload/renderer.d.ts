@@ -1,6 +1,9 @@
 export interface IElectronAPI {
   loadPreferences: () => Promise<void>;
-  selectSourceFolders: () => Promise<string[]>;
+  selectMultipleFolders: () => Promise<string[]>;
+  selectSingleFolder: () => Promise<string[]>;
+  analyzeSources: (sources: String[], options: any) => Promise<void>;
+  onEvent: (callback: Function) => any;
 }
 
 declare global {

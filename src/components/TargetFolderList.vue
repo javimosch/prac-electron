@@ -1,21 +1,21 @@
 <script setup>
 import { NButton, NList, NListItem } from "naive-ui";
 import { ClearFilled } from "@vicons/material";
-import { inject, ref, computed } from "vue";
-
+import { ref, computed, inject } from "vue";
 import { Icon } from "@vicons/utils";
+
 import { PrakStateSymbol } from "../constants.js";
-const { sourceFolders } = inject(PrakStateSymbol);
+const { targetDirectory } = inject(PrakStateSymbol);
 
-//let sourceFolders: Ref<string[]> = ref(["/home/javi/Downloads"]);
+//let targetDirectory: Ref<string[]> = ref(["/home/javi/Documents/download-new"]);
 
-async function selectSourceFolders() {
-  let paths = (await window.electronAPI.selectMultipleFolders()) || [];
-  sourceFolders.value = [...sourceFolders.value, ...paths];
+async function selectMultipleFolders() {
+  let paths = (await window.electronAPI.selectSingleFolder()) || [];
+  targetDirectory.value = paths;
 }
 function removeFolder(fullPath) {
-  sourceFolders.value.splice(
-    sourceFolders.value.findIndex((f) => f == fullPath),
+  targetDirectory.value.splice(
+    targetDirectory.value.findIndex((f) => f == fullPath),
     1
   );
 }
@@ -27,7 +27,7 @@ const getFolderName = computed(() => {
 
 <template>
   <NList>
-    <NListItem v-for="fullPath in sourceFolders" :key="fullPath">
+    <NListItem v-for="fullPath in targetDirectory" :key="fullPath">
       <p>{{ getFolderName(fullPath) }}</p>
       <p class="full-path">{{ fullPath }}</p>
       <template #suffix>
@@ -39,7 +39,7 @@ const getFolderName = computed(() => {
       </template>
     </NListItem>
     <template #footer>
-      <n-button @click="selectSourceFolders">Add sources</n-button>
+      <n-button @click="selectMultipleFolders">Set destination</n-button>
     </template>
   </NList>
 </template>
