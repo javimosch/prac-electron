@@ -43,7 +43,7 @@ app.post("/", async (req, res) => {
     saveFileName,
   });
 
-  processArtifact();
+  processArtifact(saveFileName, downloadURL);
 
   res.status(200).json({});
 });
