@@ -1,6 +1,13 @@
 import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { release } from "os";
 import { join } from "path";
+const { shell } = require("electron");
+const log = require("electron-log");
+log.catchErrors({
+  showDialog: true,
+});
+Object.assign(console, log.functions);
+const cfg = require("electron-cfg");
 const md5File = require("md5-file");
 const emptyDir = require("empty-dir");
 const sander = require("sander");
@@ -40,6 +47,7 @@ const url = `http://${process.env["VITE_DEV_SERVER_HOST"]}:${process.env["VITE_D
 const indexHtml = join(ROOT_PATH.dist, "index.html");
 
 async function createWindow() {
+  const winCfg = cfg.window();
   win = new BrowserWindow({
     title: "Main window",
     icon: join(ROOT_PATH.public, "favicon.ico"),
@@ -51,7 +59,9 @@ async function createWindow() {
       nodeIntegration: true,
       contextIsolation: true,
     },
+    ...winCfg.options(),
   });
+  winCfg.assign(win);
 
   if (app.isPackaged) {
     win.loadFile(indexHtml);
@@ -117,6 +127,9 @@ ipcMain.handle("open-win", (event, arg) => {
   }
 });
 
+ipcMain.handle("isPackaged", async () => {
+  return app.isPackaged;
+});
 ipcMain.handle("selectMultipleFolders", async () => {
   const { dialog } = require("electron");
   let res;
@@ -149,110 +162,158 @@ ipcMain.handle("selectSingleFolder", async () => {
   return res.filePaths;
 });
 
+ipcMain.handle("openLogsFolder", async () => {
+  shell.showItemInFolder(cfg.resolveUserDataPath("logs/main.log"));
+});
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
-  console.log("analyzeSources", {
+  console.debug(
+    "analyzeSources",
+    JSON.stringify(
+      {
+        sources,
+        options,
+      },
+      null,
+      4
+    )
+  );
+
+  if (sources.length === 0) {
+    console.error("Missing source paths");
+    return;
+  }
+
+  if (!options.targetDirectory) {
+    console.error("Missing target directory");
+    return;
+  }
+
+  let currCfg = cfg.create(options.name || "default.json");
+
+  let computedConfigId = JSON.stringify({
     sources,
-    options,
+    targetDirectory: options.targetDirectory,
   });
+  let configId = currCfg.get("id", computedConfigId);
+  let fileStats = currCfg.get("stats", []);
+  let uniqueFileStats = currCfg.get("stats", []);
+  let isAnalysisComplete = currCfg.get("analysis", false);
 
   let actions = [];
 
-  //Empty folder rule (target folder)
-  let isTargetDirectoryEmpty = await emptyDir(options.targetDirectory);
-
-  if (!isTargetDirectoryEmpty) {
-    actions.push({
-      html: getHTMLParagraph(`Target directory is not empty`, "Abort"),
-    });
-    return { actions };
+  if (configId != computedConfigId) {
+    isAnalysisComplete = false;
   }
 
-  let readResults = await Promise.all(
-    sources.map((sourcePath) => {
-      return (async () => {
-        //files
-        return await rra.list(
-          sourcePath,
-          {
-            mode: rra.LIST,
-            recursive: true,
-            stats: true,
-            ignoreFolders: true,
-            extensions: false,
-            deep: true,
-            realPath: true,
-            normalizePath: true,
-            include: options.include || [],
-            //exclude: [],
-            readContent: false,
-            //encoding: 'base64'
-          },
-          function (obj, index, total) {
-            if (obj.isDirectory) {
-              return;
+  if (fileStats.length === 0 && uniqueFileStats.length === 0) {
+    isAnalysisComplete = false;
+  }
+
+  if (!isAnalysisComplete) {
+    console.verbose("Running analysis");
+    //Analysis start
+
+    let readResults = await Promise.all(
+      sources.map((sourcePath) => {
+        return (async () => {
+          //files
+          let files = await rra.list(
+            sourcePath,
+            {
+              mode: rra.LIST,
+              recursive: true,
+              stats: true,
+              ignoreFolders: true,
+              extensions: false,
+              deep: true,
+              realPath: true,
+              normalizePath: true,
+              include: options.include || [],
+              //exclude: [],
+              readContent: false,
+              //encoding: 'base64'
+            },
+            function (obj, index, total) {
+              if (obj.isDirectory) {
+                return;
+              }
+              //console.log("File found", obj);
             }
-            //console.log("File found", obj);
-          }
-        );
-      })();
-    })
-  );
-  let files = readResults.reduce((a, v) => {
-    a = [...a, ...v];
-    return a;
-  }, []);
+          );
+          return files.map((f) => {
+            f.sourcePath = sourcePath;
+            return f;
+          });
+        })();
+      })
+    );
+    let files = readResults.reduce((a, v) => {
+      a = [...a, ...v];
+      return a;
+    }, []);
 
-  await Promise.all(
-    files.map((file: any) => {
-      return (async () => {
-        //grab md5
-        let md5 = file.md5 || (await md5File(file.fullname));
-        file.md5 = md5;
-      })();
-    })
-  );
+    await Promise.all(
+      files.map((file: any) => {
+        return (async () => {
+          //grab md5
+          let md5 = file.md5 || (await md5File(file.fullname));
+          file.md5 = md5;
+        })();
+      })
+    );
 
-  files.forEach((file, index) => {
-    file.duplicates = files
-      .filter((v, i) => i !== index)
-      .filter((f) => f.md5 == file.md5)
-      .map((f) => f.fullname);
-  });
+    files.forEach((file, index) => {
+      file.duplicates = files
+        .filter((v, i) => i !== index)
+        .filter((f) => f.md5 == file.md5)
+        .map((f) => f.fullname);
+    });
 
-  let uniqueFiles = files.filter(
-    (f, i) => files.findIndex((ff) => ff.md5 == f.md5) == i
-  );
+    let uniqueFiles = files.filter(
+      (f, i) => files.findIndex((ff) => ff.md5 == f.md5) == i
+    );
+    fileStats = files;
+    uniqueFileStats = uniqueFiles;
+  } else {
+    console.verbose("Restoring analysis");
+  }
+
+  //Analysis complete
+  isAnalysisComplete = true;
+  currCfg.set("analysis", isAnalysisComplete);
+  currCfg.set("fileStats", fileStats);
+  currCfg.set("uniqueFileStats", uniqueFileStats);
+  //=====
 
   //List files to be copied/moved
-  actions.push({
-    html: getHTMLParagraph(`${files.length} files detected`),
-  });
-  actions.push({
-    html: getHTMLParagraph(
-      `${files.length - uniqueFiles.length} duplicated files will be ignored`
-    ),
-  });
+  console.info(`${fileStats.length} files detected`);
+  console.info(
+    `${
+      fileStats.length - uniqueFileStats.length
+    } duplicated files will be ignored`
+  );
 
   if (options.isDryRun) {
-    actions.push({
-      html: getHTMLParagraph(`Dry Run mode`, "Abort"),
-    });
+    console.info(`Dry Run mode (Abort)`);
+    return;
+  }
+
+  //Empty folder rule (target folder)
+  let isTargetDirectoryEmpty = await emptyDir(options.targetDirectory);
+  if (!isTargetDirectoryEmpty) {
+    console.info(`Target directory is not empty (Abort)`);
+    return;
   }
 
   //Main action (copy / move)
   if (!options.isDryRun && options.mainAction === "copy") {
     if (options.mainAction !== "copy") {
-      actions.push({
-        html: getHTMLParagraph(
-          `${options.mainAction} mode not implemented (mainAction)`,
-          "Warning"
-        ),
-      });
+      console.warn(`${options.mainAction} mode not implemented (mainAction)`);
     }
 
     setTimeout(() => {
       Promise.all(
-        uniqueFiles.map((file: any) => {
+        uniqueFileStats.map((file: any) => {
           return (async () => {
             let targetPath = (file.fullname,
             options.targetDirectory + "/" + file.name)
@@ -262,33 +323,39 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               await sander.copyFile(file.fullname).to(targetPath);
             }
             if (options.targetDirectoryStructure !== "flat") {
-              actions.push({
-                html: getHTMLParagraph(
-                  `${options.targetDirectoryStructure} mode not implemented (Structure)`,
-                  "Warning"
-                ),
-              });
+              console.warn(
+                `${options.targetDirectoryStructure} mode not implemented (Structure)`
+              );
             }
+            console.verbose(`${targetPath} (Copied)`);
             win?.webContents.send("event", {
-              html: getHTMLParagraph(`${targetPath} (Copied)`),
               processing: true,
             });
           })();
         })
       ).then(() => {
+        console.info("Copy process ended");
         win?.webContents.send("event", {
-          html: getHTMLParagraph("Copy process ended"),
           processing: false,
         });
       });
     }, 1000);
   }
 
-  //console.log(files);
-  return { actions };
+  return;
 });
 
 function getHTMLParagraph(text: String, title = "Info") {
-  console.log(`${title}: ${text}`);
+  //console.log(`${title}: ${text}`);
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
 }
+
+log.hooks.push((message, transport) => {
+  if (transport === log.transports.console) {
+    win?.webContents.send("event", {
+      html: getHTMLParagraph(message.data, message.level),
+    });
+  }
+
+  return message;
+});

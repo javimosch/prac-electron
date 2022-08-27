@@ -7,6 +7,7 @@ export default {
     const state = reactive({
       sourceFolders: ref(["/home/javi/Downloads"]),
       targetDirectory: ref(["/home/javi/Documents/download-new"]),
+      outputResult: ref(""),
     });
     // Using `toRefs()` makes it possible to use
     // spreading in the consuming component.

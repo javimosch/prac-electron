@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
-  loadPreferences: () => ipcRenderer.invoke("load-prefs"),
+  openLogsFolder: () => ipcRenderer.invoke("openLogsFolder"),
+  isPackaged: () => ipcRenderer.invoke("isPackaged"),
   selectMultipleFolders: () =>
     <Promise<any>>ipcRenderer.invoke("selectMultipleFolders"),
   selectSingleFolder: () =>

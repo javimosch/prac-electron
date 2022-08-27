@@ -1,4 +1,5 @@
 <script setup>
+import LoggingLevels from "./LoggingLevels.vue";
 import { ref, inject, computed, onMounted, onUnmounted } from "vue";
 import {
   NSpace,
@@ -12,8 +13,11 @@ import {
   NTooltip,
 } from "naive-ui";
 import { PrakStateSymbol } from "../constants.js";
-const { sourceFolders, targetDirectory } = inject(PrakStateSymbol);
+const { sourceFolders, targetDirectory, outputResult } =
+  inject(PrakStateSymbol);
 import { useLoadingBar } from "naive-ui";
+
+let loggingLevel = ref("verbose");
 
 let formValue = ref({
   extensions: "jpg, png, gif, svg",
@@ -22,7 +26,7 @@ let formValue = ref({
 });
 
 const loadingBar = useLoadingBar();
-let result = ref();
+
 let isLoading = ref(false);
 let unbindOnEvent;
 onMounted(() => {
@@ -30,32 +34,36 @@ onMounted(() => {
     if (message.processing !== undefined) {
       isLoading.value = message.processing;
     }
-    result.value += message.html;
+    if (message.html) {
+      outputResult.value += message.html;
+
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
   });
 });
 onUnmounted(() => {
   unbindOnEvent();
 });
 
+function openLogsFolder() {
+  window.electronAPI.openLogsFolder();
+}
 async function executeAnalysis(isDryRun = false) {
   loadingBar.start();
   isLoading.value = true;
-  result.value = "";
-  let { actions } = await window.electronAPI.analyzeSources(
-    [...sourceFolders.value],
-    {
-      isDryRun: isDryRun === true,
-      mainAction: formValue.value.mainAction,
-      targetDirectoryStructure: formValue.value.targetDirectoryStructure,
-      targetDirectory: targetDirectory.value[0],
-      include: formValue.value.extensions
-        .split(",")
-        .map((v) => `.` + v.split(".").join("")),
-    }
-  );
+  outputResult.value = "";
+  await window.electronAPI.analyzeSources([...sourceFolders.value], {
+    isDryRun: isDryRun === true,
+    mainAction: formValue.value.mainAction,
+    targetDirectoryStructure: formValue.value.targetDirectoryStructure,
+    targetDirectory: targetDirectory.value[0],
+    include: formValue.value.extensions
+      .split(",")
+      .map((v) => `.` + v.split(".").join("")),
+  });
   isLoading.value = false;
   loadingBar.finish();
-  result.value = actions.map((action) => action.html).join("");
+  //outputResult.value = actions.map((action) => action.html).join("");
 }
 
 let canRun = computed({
@@ -114,22 +122,17 @@ let canRun = computed({
           </n-tooltip>
         </n-radio-group>
       </NFormItem>
+      <NFormItem label="Logging">
+        <LoggingLevels v-model="loggingLevel" />
+      </NFormItem>
     </NForm>
     <NSpace>
       <NButton :disabled="!canRun" @click="executeAnalysis(true)"
         >Dry Run</NButton
       >
       <NButton :disabled="!canRun" @click="executeAnalysis(false)">Run</NButton>
+      <NButton @click="openLogsFolder">Logs</NButton>
     </NSpace>
-    <div class="result" v-html="result"></div>
   </div>
 </template>
-<style scoped>
-p {
-  font-size: 10px;
-}
-.result {
-  max-height: 300px;
-  overflow-y: auto;
-}
-</style>
+<style scoped></style>

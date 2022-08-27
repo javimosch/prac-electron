@@ -1,4 +1,5 @@
-<script setup lang="ts">
+<script setup>
+import OutputConsole from "./components/OutputConsole.vue";
 import ExecuteSection from "./components/ExecuteSection.vue";
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
@@ -50,6 +51,11 @@ import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
               <n-divider>Destination</n-divider>
               <TargetFolderList />
             </n-grid-item>
+          </n-grid>
+          <n-grid :x-gap="12" cols="1">
+            <NGridItem>
+              <OutputConsole />
+            </NGridItem>
           </n-grid>
         </n-space>
       </n-config-provider>

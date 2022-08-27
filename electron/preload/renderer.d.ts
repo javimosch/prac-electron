@@ -1,5 +1,5 @@
 export interface IElectronAPI {
-  loadPreferences: () => Promise<void>;
+  isPackaged: () => Promise<boolean>;
   selectMultipleFolders: () => Promise<string[]>;
   selectSingleFolder: () => Promise<string[]>;
   analyzeSources: (sources: String[], options: any) => Promise<void>;
