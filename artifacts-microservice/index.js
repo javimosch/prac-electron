@@ -43,7 +43,16 @@ app.post("/", async (req, res) => {
     saveFileName,
   });
 
-  if (await isDmgAlreadyPresent(filePath)) {
+  processArtifact();
+
+  res.status(200).json({});
+});
+app.listen(3000, () => console.log("READY"));
+
+//processArtifact("release_on_macos-latest_270822-023336.dmg");
+
+async function processArtifact(saveFileName, downloadURL) {
+  if (await isDmgAlreadyPresent(saveFileName)) {
     console.log("dmg is already present");
     triggerN8nGoogleDriveUpload();
   } else {
@@ -59,15 +68,12 @@ app.post("/", async (req, res) => {
       triggerN8nGoogleDriveUpload();
     }
   }
-
-  res.status(200).json({});
-});
-app.listen(3000, () => console.log("READY"));
+}
 
 async function triggerN8nGoogleDriveUpload() {}
 
 async function isDmgAlreadyPresent(zipFilePath) {
-  let dmgFileName = filePath.split(".zip").join(".dmg");
+  let dmgFileName = zipFilePath.split(".zip").join(".dmg");
   return await sander.exists(dmgFileName);
 }
 
