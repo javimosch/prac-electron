@@ -80,6 +80,7 @@
     "recursive-readdir-async": "^1.2.1",
     "sander": "^0.6.0",
     "sass": "^1.54.4",
+    "serve-index": "^1.9.1",
     "sha-anything": "^0.0.2"
   }
 }

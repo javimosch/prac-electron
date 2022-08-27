@@ -7,8 +7,13 @@ const sander = require("sander");
 const fs = require("fs");
 const express = require("express");
 const app = express();
-
+var serveIndex = require("serve-index");
+const path = require("path");
 app.use(express.json());
+
+app.use("/", serveIndex(path.join(process.cwd(), "/")));
+app.use("/", express.static(path.join(process.cwd(), "/")));
+
 app.post("/", async (req, res) => {
   let currItem;
   let downloadURL = "";
