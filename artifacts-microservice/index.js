@@ -64,7 +64,7 @@ async function processArtifact(saveFileName, downloadURL) {
       triggerN8nGoogleDriveUpload();
     } else {
       await downloadZipFile(downloadURL, saveFileName);
-      await extractDmgFile(fileName);
+      await extractDmgFile(saveFileName);
       triggerN8nGoogleDriveUpload();
     }
   }
@@ -138,9 +138,9 @@ function downloadZipFile(url, fileName) {
         console.log("downloading", {
           ...state,
           computed: {
-            elapsed: state.elapsed,
+            elapsed: state.time.elapsed,
             speed: (state.speed / 1024 / 1024).toFixed(2) + "mb/s",
-            completed: (state.transferred / 1024 / 1024).toFixed(2) + "mb",
+            completed: (state.size.transferred / 1024 / 1024).toFixed(2) + "mb",
           },
         });
       })
