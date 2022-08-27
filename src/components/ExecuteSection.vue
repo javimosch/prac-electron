@@ -19,6 +19,8 @@ import { useLoadingBar } from "naive-ui";
 
 let loggingLevel = ref("verbose");
 
+//Test
+
 let formValue = ref({
   extensions: "jpg, png, gif, svg",
   targetDirectoryStructure: "flat",
