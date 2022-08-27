@@ -78,6 +78,7 @@ async function isDmgAlreadyPresent(zipFilePath) {
 }
 
 async function extractDmgFile(filePath) {
+  let dmgFileName = zipFilePath.split(".zip").join(".dmg");
   if (await isDmgAlreadyPresent(filePath)) {
     console.log("dmg is already present");
     return;
