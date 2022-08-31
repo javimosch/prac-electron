@@ -65,45 +65,45 @@ async function processArtifact(saveFileName, downloadURL) {
 
 async function removeOlderFiles(name) {
   let dmgFileName = name.split(".zip").join(".dmg");
-  let files = await rra.list(
-    process.cwd(),
-    {
-      mode: rra.LIST,
-      recursive: false,
-      stats: true,
-      ignoreFolders: true,
-      extensions: false,
-      deep: true,
-      realPath: true,
-      normalizePath: true,
-      include: [],
-      //exclude: [],
-      readContent: false,
-      //encoding: 'base64'
-    },
-    function (obj, index, total) {
-      if (obj.isDirectory) {
-        return;
-      }
-      //console.log("File found", obj);
-    }
-  );
+  let files = await rra.list(process.cwd(), {
+    mode: rra.LIST,
+    recursive: false,
+    stats: true,
+    ignoreFolders: true,
+    extensions: false,
+    deep: true,
+    realPath: true,
+    normalizePath: true,
+    include: [],
+    //exclude: [],
+    readContent: false,
+    //encoding: 'base64'
+  });
 
-  await Promise.all(
-    files
-      .filter(
-        (file) =>
-          file.name != name &&
-          file.name != dmgFileName &&
-          (file.name.includes(".dmg") || file.name.includes(".zip"))
-      )
-      .map((file) => {
-        return (async () => {
-          //sander.rimraf(file.fullname)
-          console.log("Will remove", file.name);
-        })();
-      })
-  );
+  if (files.length > 0) {
+    await Promise.all(
+      files
+        .filter(
+          (file) =>
+            file.name != name &&
+            file.name != dmgFileName &&
+            (file.name.includes(".dmg") || file.name.includes(".zip"))
+        )
+        .map((file) => {
+          return (async () => {
+            if (process.env.ENABLE_RIMRAF === "1") {
+              sander.rimraf(file.fullname);
+              console.log("Will remove", file.name);
+            } else {
+              console.log("Should remove", file.name);
+            }
+          })();
+        })
+    );
+    console.log("removeOlderFiles completed");
+  } else {
+    console.log("removeOlderFiles completed (Skip)");
+  }
 }
 
 async function processLatestArtifact(artifactList) {
