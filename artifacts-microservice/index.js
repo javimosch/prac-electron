@@ -19,26 +19,21 @@ var serveIndex = require("serve-index");
 
 app.use(express.json());
 
-app.use("/", serveIndex(path.join(process.cwd(), "/")));
-app.use("/", express.static(path.join(process.cwd(), "/")));
-
-app.get("/test", async (req, res) => {
-  let apiRes = await octokit.request(
-    "GET /repos/{owner}/{repo}/actions/artifacts",
-    {
-      owner: "javimosch",
-      repo: "prac-electron",
-    }
-  );
-  processLatestArtifact(apiRes.data.artifacts).then(() => {});
-
-  res.json({ message: "Queued", apiRes });
+app.get("/webhook", (req, res) => {
+  processLatestArtifact(req.body);
+  res.status(200).json({ alive: true, message: "Queued" });
 });
-
-app.post("/", async (req, res) => {
+app.post("/webhook", (req, res) => {
+  console.log({
+    body: req.body,
+  });
   processLatestArtifact(req.body);
   res.status(200).json({});
 });
+
+app.use("/", serveIndex(path.join(process.cwd(), "/")));
+app.use("/", express.static(path.join(process.cwd(), "/")));
+
 app.listen(3000, () => log.info("READY"));
 
 //processArtifact("release_on_macos-latest_270822-023336.dmg");
@@ -107,6 +102,15 @@ async function removeOlderFiles(name) {
 }
 
 async function processLatestArtifact(artifactList) {
+  let apiRes = await octokit.request(
+    "GET /repos/{owner}/{repo}/actions/artifacts",
+    {
+      owner: "javimosch",
+      repo: "prac-electron",
+    }
+  );
+  let artifactList = apiRes.data.artifacts;
+
   let currItem;
   let downloadURL = "";
   let artificatCreatedAt = null;
