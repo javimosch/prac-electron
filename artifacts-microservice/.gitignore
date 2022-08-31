@@ -2,3 +2,6 @@ node_modules
 *.dmg
 *.zip
 *.swp
+logs
+!logs/.gitkeep
+.env

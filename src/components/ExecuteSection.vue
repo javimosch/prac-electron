@@ -61,7 +61,8 @@ async function executeAnalysis(isDryRun = false) {
     targetDirectory: targetDirectory.value[0],
     include: formValue.value.extensions
       .split(",")
-      .map((v) => `.` + v.split(".").join("")),
+      .filter((v) => !!v)
+      .map((v) => `.` + v.split(".").join("").trim()),
   });
   isLoading.value = false;
   loadingBar.finish();

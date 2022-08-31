@@ -10,13 +10,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.0.2",
     "express": "^4.18.1",
     "moment": "^2.29.4",
     "octokit": "^2.0.7",
+    "recursive-readdir-async": "^1.2.1",
     "request": "^2.88.2",
     "request-progress": "^3.0.0",
     "sander": "^0.6.0",
     "serve-index": "^1.9.1",
+    "simple-node-logger": "^21.8.12",
     "unzipper": "^0.10.11"
   }
 }

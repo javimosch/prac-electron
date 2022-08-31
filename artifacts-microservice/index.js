@@ -1,25 +1,117 @@
 import { createRequire } from "module";
-import moment from "moment";
-//import { Octokit, App } from "octokit";
-
 const require = createRequire(import.meta.url);
+require("dotenv").config({
+  silent: true,
+});
+import moment from "moment";
+import { Octokit, App } from "octokit";
+import * as rra from "recursive-readdir-async";
+const path = require("path");
+const log = console;
+
+const octokit = new Octokit({ auth: process.env.GITHUB_ACCESS_TOKEN });
+
 const sander = require("sander");
 const fs = require("fs");
 const express = require("express");
 const app = express();
 var serveIndex = require("serve-index");
-const path = require("path");
+
 app.use(express.json());
 
 app.use("/", serveIndex(path.join(process.cwd(), "/")));
 app.use("/", express.static(path.join(process.cwd(), "/")));
 
+app.get("/test", async (req, res) => {
+  let apiRes = await octokit.request(
+    "GET /repos/{owner}/{repo}/actions/artifacts",
+    {
+      owner: "javimosch",
+      repo: "prac-electron",
+    }
+  );
+  processLatestArtifact(apiRes.data.artifacts).then(() => {});
+
+  res.json({ message: "Queued", apiRes });
+});
+
 app.post("/", async (req, res) => {
+  processLatestArtifact(req.body);
+  res.status(200).json({});
+});
+app.listen(3000, () => log.info("READY"));
+
+//processArtifact("release_on_macos-latest_270822-023336.dmg");
+
+async function processArtifact(saveFileName, downloadURL) {
+  if (await isDmgAlreadyPresent(saveFileName)) {
+    log.info("dmg is already present");
+    await triggerN8nGoogleDriveUpload();
+  } else {
+    let alreadyDownloaded = await sander.exists(saveFileName);
+
+    if (alreadyDownloaded) {
+      log.info("Skip, already downloaded");
+      await extractDmgFile(saveFileName);
+      await triggerN8nGoogleDriveUpload();
+    } else {
+      await downloadZipFile(downloadURL, saveFileName);
+      await extractDmgFile(saveFileName);
+      await triggerN8nGoogleDriveUpload();
+    }
+  }
+  removeOlderFiles(saveFileName);
+}
+
+async function removeOlderFiles(name) {
+  let dmgFileName = name.split(".zip").join(".dmg");
+  let files = await rra.list(
+    process.cwd(),
+    {
+      mode: rra.LIST,
+      recursive: false,
+      stats: true,
+      ignoreFolders: true,
+      extensions: false,
+      deep: true,
+      realPath: true,
+      normalizePath: true,
+      include: [],
+      //exclude: [],
+      readContent: false,
+      //encoding: 'base64'
+    },
+    function (obj, index, total) {
+      if (obj.isDirectory) {
+        return;
+      }
+      //console.log("File found", obj);
+    }
+  );
+
+  await Promise.all(
+    files
+      .filter(
+        (file) =>
+          file.name != name &&
+          file.name != dmgFileName &&
+          (file.name.includes(".dmg") || file.name.includes(".zip"))
+      )
+      .map((file) => {
+        return (async () => {
+          //sander.rimraf(file.fullname)
+          console.log("Will remove", file.name);
+        })();
+      })
+  );
+}
+
+async function processLatestArtifact(artifactList) {
   let currItem;
   let downloadURL = "";
   let artificatCreatedAt = null;
 
-  req.body
+  artifactList
     .filter((item) => {
       return item.name.includes("macos") && item.expired === false;
     })
@@ -43,39 +135,17 @@ app.post("/", async (req, res) => {
     moment(currItem.created_at).format("DDMMYY-HHmmss") +
     ".zip";
 
-  console.log({
+  log.info({
     downloadURL,
     saveFileName,
   });
 
   processArtifact(saveFileName, downloadURL);
-
-  res.status(200).json({});
-});
-app.listen(3000, () => console.log("READY"));
-
-//processArtifact("release_on_macos-latest_270822-023336.dmg");
-
-async function processArtifact(saveFileName, downloadURL) {
-  if (await isDmgAlreadyPresent(saveFileName)) {
-    console.log("dmg is already present");
-    triggerN8nGoogleDriveUpload();
-  } else {
-    let alreadyDownloaded = await sander.exists(saveFileName);
-
-    if (alreadyDownloaded) {
-      console.log("Skip, already downloaded");
-      await extractDmgFile(saveFileName);
-      triggerN8nGoogleDriveUpload();
-    } else {
-      await downloadZipFile(downloadURL, saveFileName);
-      await extractDmgFile(saveFileName);
-      triggerN8nGoogleDriveUpload();
-    }
-  }
 }
 
-async function triggerN8nGoogleDriveUpload() {}
+async function triggerN8nGoogleDriveUpload() {
+  log.info("triggerN8nGoogleDriveUpload not implemented");
+}
 
 async function isDmgAlreadyPresent(zipFilePath) {
   let dmgFileName = zipFilePath.split(".zip").join(".dmg");
@@ -85,8 +155,8 @@ async function isDmgAlreadyPresent(zipFilePath) {
 async function extractDmgFile(filePath) {
   let dmgFileName = filePath.split(".zip").join(".dmg");
   if (await isDmgAlreadyPresent(filePath)) {
-    console.log("dmg is already present");
-    return;
+    log.info("dmg is already present");
+    return dmgFileName;
   }
   const unzipper = require("unzipper");
   const zip = fs
@@ -99,13 +169,14 @@ async function extractDmgFile(filePath) {
     if (fileName.includes(".dmg")) {
       entry
         .on("end", () => {
-          console.log("Unzip complete");
+          log.info("Unzip complete");
         })
         .pipe(fs.createWriteStream(dmgFileName));
     } else {
       entry.autodrain();
     }
   }
+  return dmgFileName;
 }
 
 function downloadZipFile(url, fileName) {
@@ -117,7 +188,7 @@ function downloadZipFile(url, fileName) {
         url: url,
         headers: {
           "User-Agent": "",
-          Authorization: "token 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",
+          Authorization: `token ${process.env.GITHUB_ACCESS_TOKEN}`,
         },
       }),
       {
@@ -140,8 +211,8 @@ function downloadZipFile(url, fileName) {
         //         remaining: 81.403       // The remaining seconds to finish (3 decimals)
         //     }
         // }
-        //console.log("progress", state);
-        console.log("downloading", {
+        //log.info("progress", state);
+        log.info("downloading", {
           ...state,
           computed: {
             elapsed: state.time.elapsed,
@@ -152,11 +223,11 @@ function downloadZipFile(url, fileName) {
       })
       .on("error", function (err) {
         // Do something with err
-        console.log("request error", err);
+        log.info("request error", err);
       })
       .on("end", function () {
         // Do something after request finishes
-        console.log("request end");
+        log.info("request end");
         resolve();
       })
       .pipe(fs.createWriteStream(fileName));
