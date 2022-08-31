@@ -7,6 +7,7 @@ log.catchErrors({
   showDialog: true,
 });
 Object.assign(console, log.functions);
+const path = require("path");
 const cfg = require("electron-cfg");
 const md5File = require("md5-file");
 const emptyDir = require("empty-dir");
@@ -15,6 +16,8 @@ const isProduction = process.env.NODE_ENV === "production";
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
 import * as rra from "recursive-readdir-async";
+
+let logLevel = "normal";
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith("6.1")) app.disableHardwareAcceleration();
@@ -177,6 +180,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       4
     )
   );
+  logLevel = options.loggingLevel || logLevel;
 
   if (sources.length === 0) {
     console.error("Missing source paths");
@@ -208,6 +212,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   if (fileStats.length === 0 && uniqueFileStats.length === 0) {
     isAnalysisComplete = false;
   }
+
+  //Force analysis
+  isAnalysisComplete = false;
 
   if (!isAnalysisComplete) {
     console.verbose("Running analysis");
@@ -269,9 +276,64 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         .map((f) => f.fullname);
     });
 
+    //Read files in the target dir
+
+    let filesInTargetDir = await rra.list(options.targetDirectory, {
+      mode: rra.LIST,
+      recursive: true,
+      stats: true,
+      ignoreFolders: true,
+      extensions: false,
+      deep: true,
+      realPath: true,
+      normalizePath: true,
+      include: options.include || [],
+      readContent: false,
+    });
+    await Promise.all(
+      filesInTargetDir.map((file: any) => {
+        return (async () => {
+          let md5 = file.md5 || (await md5File(file.fullname));
+          file.md5 = md5;
+        })();
+      })
+    );
+
+    console.info(`${files.length} files detected in source directories`);
+
     let uniqueFiles = files.filter(
       (f, i) => files.findIndex((ff) => ff.md5 == f.md5) == i
     );
+    let duplicatedFiles = files.filter(
+      (f, i) => !uniqueFiles.some((ff) => ff.fullname == f.fullname) //TODO use unique identifier
+    );
+    duplicatedFiles.forEach((f, i) => {
+      console.verbose(`[${i}] ${f.name} / ${f.md5} duplicated (Skip)`);
+    });
+    console.info(
+      `${uniqueFiles.length} unique files detected (After checking duplicates in source directories)`
+    );
+    let existingFilesInTargetDir = uniqueFiles.filter(
+      (f) => filesInTargetDir.findIndex((ff) => ff.md5 == f.md5) >= 0
+    );
+    currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
+    //filter out existing files in target dir
+    uniqueFiles = uniqueFiles.filter((f, i) => {
+      let r = !existingFilesInTargetDir.some((ff) => ff.md5 == f.md5);
+      return r;
+    });
+    existingFilesInTargetDir.forEach((f, i) => {
+      console.verbose(
+        `[${i}] ${f.name} / ${f.md5} found in target directory (Skip) `
+      );
+    });
+    console.info(
+      `${existingFilesInTargetDir.length} dupes from target directory will be skip`
+    );
+    console.info(
+      `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
+    );
+
     fileStats = files;
     uniqueFileStats = uniqueFiles;
   } else {
@@ -285,56 +347,78 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   currCfg.set("uniqueFileStats", uniqueFileStats);
   //=====
 
-  //List files to be copied/moved
-  console.info(`${fileStats.length} files detected`);
-  console.info(
-    `${
-      fileStats.length - uniqueFileStats.length
-    } duplicated files will be ignored`
-  );
+  console.log(`${uniqueFileStats.length} files will be copied/moved`);
 
-  if (options.isDryRun) {
+  /* if (options.isDryRun) {
     console.info(`Dry Run mode (Abort)`);
     return;
-  }
+  }*/
 
   //Empty folder rule (target folder)
+  /*
   let isTargetDirectoryEmpty = await emptyDir(options.targetDirectory);
   if (!isTargetDirectoryEmpty) {
     console.info(`Target directory is not empty (Abort)`);
     return;
+  }*/
+
+  let mainActionLabelVerb = {
+    copy: "Copy",
+    move: "Move",
+  };
+  let mainActionLabelPast = {
+    copy: "Copied",
+    move: "Moved",
+  };
+  //Main action (copy / move)
+  if (options.mainAction !== "copy") {
+    console.warn(`${options.mainAction} mode not implemented (mainAction)`);
   }
 
-  //Main action (copy / move)
-  if (!options.isDryRun && options.mainAction === "copy") {
-    if (options.mainAction !== "copy") {
-      console.warn(`${options.mainAction} mode not implemented (mainAction)`);
-    }
-
+  if (["copy", "move"].includes(options.mainAction)) {
     setTimeout(() => {
       Promise.all(
         uniqueFileStats.map((file: any) => {
           return (async () => {
-            let targetPath = (file.fullname,
-            options.targetDirectory + "/" + file.name)
-              .split("//")
-              .join("/");
+            let targetBasePath = options.targetDirectory;
+            let targetFileName = file.name;
+            let targetPath = path.join(targetBasePath, targetFileName);
+
             if (options.targetDirectoryStructure === "flat") {
-              await sander.copyFile(file.fullname).to(targetPath);
+              if (!options.isDryRun) {
+                if (options.mainAction === "copy") {
+                  await sander.copyFile(file.fullname).to(targetPath);
+                }
+                if (options.mainAction === "move") {
+                  await sander
+                    .rename(file.path, file.name)
+                    .to(targetBasePath, targetFileName);
+                }
+              }
             }
             if (options.targetDirectoryStructure !== "flat") {
               console.warn(
                 `${options.targetDirectoryStructure} mode not implemented (Structure)`
               );
             }
-            console.verbose(`${targetPath} (Copied)`);
+            console.verbose(
+              `${file.fullname} to ${targetPath} ${
+                options.isDryRun
+                  ? `(Would be ${mainActionLabelPast[
+                      options.mainAction
+                    ].toLowerCase()})`
+                  : `(${mainActionLabelPast[options.mainAction]})`
+              }`
+            );
             win?.webContents.send("event", {
               processing: true,
             });
           })();
         })
       ).then(() => {
-        console.info("Copy process ended");
+        console.info(
+          `${mainActionLabelVerb[options.mainAction]} process ended`
+        );
         win?.webContents.send("event", {
           processing: false,
         });
@@ -352,10 +436,28 @@ function getHTMLParagraph(text: String, title = "Info") {
 
 log.hooks.push((message, transport) => {
   if (transport === log.transports.console) {
-    win?.webContents.send("event", {
-      html: getHTMLParagraph(message.data, message.level),
-    });
+    if (shouldSendConsoleEvent(message.level)) {
+      win?.webContents.send("event", {
+        html: getHTMLParagraph(message.data, message.level),
+      });
+    }
   }
 
   return message;
 });
+
+function shouldSendConsoleEvent(level) {
+  if (["error"].includes(level) && logLevel === "error") {
+    return true;
+  }
+  if (["error", "warn", "info"].includes(level) && logLevel === "normal") {
+    return true;
+  }
+  if (
+    ["error", "warn", "info", "verbose"].includes(level) &&
+    logLevel === "verbose"
+  ) {
+    return true;
+  }
+  return false;
+}

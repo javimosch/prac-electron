@@ -39,21 +39,20 @@ import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
               </p>
             </n-grid-item>
           </n-grid>
-          <n-grid :x-gap="12" cols="3">
+          <n-grid :x-gap="12" cols="2">
             <n-grid-item>
               <n-divider>Sources</n-divider>
-              <SourceFolderList
-            /></n-grid-item>
-            <n-grid-item>
-              <ExecuteSection />
-            </n-grid-item>
-            <n-grid-item>
+              <SourceFolderList />
               <n-divider>Destination</n-divider>
               <TargetFolderList />
+            </n-grid-item>
+            <n-grid-item>
+              <ExecuteSection />
             </n-grid-item>
           </n-grid>
           <n-grid :x-gap="12" cols="1">
             <NGridItem>
+              <n-divider>Output</n-divider>
               <OutputConsole />
             </NGridItem>
           </n-grid>
