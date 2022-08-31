@@ -1,12 +1,15 @@
 import { app, BrowserWindow, shell, ipcMain } from "electron";
 import { release } from "os";
 import { join } from "path";
+import sequential from "./promiseSequence";
+import moment from "moment-timezone";
 const { shell } = require("electron");
 const log = require("electron-log");
 log.catchErrors({
   showDialog: true,
 });
 Object.assign(console, log.functions);
+
 const path = require("path");
 const cfg = require("electron-cfg");
 const md5File = require("md5-file");
@@ -18,6 +21,15 @@ const isProduction = process.env.NODE_ENV === "production";
 import * as rra from "recursive-readdir-async";
 
 let logLevel = "normal";
+
+let mainActionLabelVerb = {
+  copy: "Copy",
+  move: "Move",
+};
+let mainActionLabelPast = {
+  copy: "Copied",
+  move: "Moved",
+};
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith("6.1")) app.disableHardwareAcceleration();
@@ -220,9 +232,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     console.verbose("Running analysis");
     //Analysis start
 
-    let readResults = await Promise.all(
+    let readResults = await sequential(
       sources.map((sourcePath) => {
-        return (async () => {
+        return async () => {
           //files
           let files = await rra.list(
             sourcePath,
@@ -251,21 +263,22 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             f.sourcePath = sourcePath;
             return f;
           });
-        })();
+        }; //();
       })
     );
+    //console.debug(readResults);
     let files = readResults.reduce((a, v) => {
       a = [...a, ...v];
       return a;
     }, []);
 
-    await Promise.all(
+    await sequential(
       files.map((file: any) => {
-        return (async () => {
+        return async () => {
           //grab md5
           let md5 = file.md5 || (await md5File(file.fullname));
           file.md5 = md5;
-        })();
+        }; //();
       })
     );
 
@@ -290,12 +303,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       include: options.include || [],
       readContent: false,
     });
-    await Promise.all(
+    await sequential(
       filesInTargetDir.map((file: any) => {
-        return (async () => {
+        return async () => {
           let md5 = file.md5 || (await md5File(file.fullname));
           file.md5 = md5;
-        })();
+        }; //();
       })
     );
 
@@ -328,8 +341,35 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       );
     });
     console.info(
-      `${existingFilesInTargetDir.length} dupes from target directory will be skip`
+      `${existingFilesInTargetDir.length} files which already exists in target directory will be skip`
     );
+
+    //If "move", remove skipped files from sources
+    if (options.mainAction === "move") {
+      Promise.all(
+        existingFilesInTargetDir.map((f) => {
+          return (async () => {
+            if (!options.isDryRun) {
+              sander.rimraf(f.fullname);
+              console.verbose(
+                `${f.fullname} (Skipped file removed from sources)`
+              );
+            } else {
+              console.verbose(
+                `${f.fullname} (Skipped file would be removed from sources)`
+              );
+            }
+          })();
+        })
+      ).then(() => {
+        console.info(
+          `${existingFilesInTargetDir.length} skipped files ${
+            options.isDryRun ? "should have been" : "were"
+          } removed from sources (Because already exists in target directory)`
+        );
+      });
+    }
+
     console.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
@@ -345,9 +385,15 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   currCfg.set("analysis", isAnalysisComplete);
   currCfg.set("fileStats", fileStats);
   currCfg.set("uniqueFileStats", uniqueFileStats);
+  currCfg.set("timestamp", moment()._d.getTime());
+  currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
   //=====
 
-  console.log(`${uniqueFileStats.length} files will be copied/moved`);
+  console.log(
+    `${uniqueFileStats.length} files ${
+      options.isDryRun ? "would be" : "will be"
+    } ${mainActionLabelPast[options.mainAction]}`
+  );
 
   /* if (options.isDryRun) {
     console.info(`Dry Run mode (Abort)`);
@@ -362,24 +408,11 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     return;
   }*/
 
-  let mainActionLabelVerb = {
-    copy: "Copy",
-    move: "Move",
-  };
-  let mainActionLabelPast = {
-    copy: "Copied",
-    move: "Moved",
-  };
-  //Main action (copy / move)
-  if (options.mainAction !== "copy") {
-    console.warn(`${options.mainAction} mode not implemented (mainAction)`);
-  }
-
   if (["copy", "move"].includes(options.mainAction)) {
     setTimeout(() => {
-      Promise.all(
+      sequential(
         uniqueFileStats.map((file: any) => {
-          return (async () => {
+          return async () => {
             let targetBasePath = options.targetDirectory;
             let targetFileName = file.name;
             let targetPath = path.join(targetBasePath, targetFileName);
@@ -413,7 +446,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             win?.webContents.send("event", {
               processing: true,
             });
-          })();
+          }; //();
         })
       ).then(() => {
         console.info(

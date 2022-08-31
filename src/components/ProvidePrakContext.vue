@@ -5,8 +5,12 @@ import { PrakStateSymbol } from "../constants.js";
 export default {
   setup() {
     const state = reactive({
-      sourceFolders: ref(["/home/javi/Downloads"]),
-      targetDirectory: ref(["/home/javi/Documents/download-new"]),
+      sourceFolders: ref([
+        /*"/home/javi/Downloads"*/
+      ]),
+      targetDirectory: ref([
+        /*"/home/javi/Documents/download-new"*/
+      ]),
       outputResult: ref(""),
     });
     // Using `toRefs()` makes it possible to use
