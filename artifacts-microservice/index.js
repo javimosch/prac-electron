@@ -1,24 +1,24 @@
 import { createRequire } from "module";
+import moment from "moment";
+import { Octokit, App } from "octokit";
+import * as rra from "recursive-readdir-async";
+
 const require = createRequire(import.meta.url);
 require("dotenv").config({
   silent: true,
 });
-import moment from "moment";
-import { Octokit, App } from "octokit";
-import * as rra from "recursive-readdir-async";
+
 const path = require("path");
-const log = console;
-
 const octokit = new Octokit({ auth: process.env.GITHUB_ACCESS_TOKEN });
-
 const sander = require("sander");
 const fs = require("fs");
 const express = require("express");
 const app = express();
-var serveIndex = require("serve-index");
+const serveIndex = require("serve-index");
+
+let isProcessing = false;
 
 app.use(express.json());
-
 app.get("/webhook", (req, res) => {
   processLatestArtifact(req.body);
   res.status(200).json({ alive: true, message: "Queued" });
@@ -30,23 +30,21 @@ app.post("/webhook", (req, res) => {
   processLatestArtifact(req.body);
   res.status(200).json({});
 });
-
 app.use("/", serveIndex(path.join(process.cwd(), "/")));
 app.use("/", express.static(path.join(process.cwd(), "/")));
-
-app.listen(3000, () => log.info("READY"));
+app.listen(3000, () => console.log("READY"));
 
 //processArtifact("release_on_macos-latest_270822-023336.dmg");
 
 async function processArtifact(saveFileName, downloadURL) {
   if (await isDmgAlreadyPresent(saveFileName)) {
-    log.info("dmg is already present");
+    console.log("dmg is already present");
     await triggerN8nGoogleDriveUpload();
   } else {
     let alreadyDownloaded = await sander.exists(saveFileName);
 
     if (alreadyDownloaded) {
-      log.info("Skip, already downloaded");
+      console.log("Skip, already downloaded");
       await extractDmgFile(saveFileName);
       await triggerN8nGoogleDriveUpload();
     } else {
@@ -102,6 +100,11 @@ async function removeOlderFiles(name) {
 }
 
 async function processLatestArtifact() {
+  if (isProcessing) {
+    console.log("Already processing, dropping...");
+  } else {
+    isProcessing = true;
+  }
   let apiRes = await octokit.request(
     "GET /repos/{owner}/{repo}/actions/artifacts",
     {
@@ -139,7 +142,7 @@ async function processLatestArtifact() {
     moment(currItem.created_at).format("DDMMYY-HHmmss") +
     ".zip";
 
-  log.info({
+  console.log({
     downloadURL,
     saveFileName,
   });
@@ -148,7 +151,7 @@ async function processLatestArtifact() {
 }
 
 async function triggerN8nGoogleDriveUpload() {
-  log.info("triggerN8nGoogleDriveUpload not implemented");
+  console.log("triggerN8nGoogleDriveUpload not implemented");
 }
 
 async function isDmgAlreadyPresent(zipFilePath) {
@@ -159,7 +162,7 @@ async function isDmgAlreadyPresent(zipFilePath) {
 async function extractDmgFile(filePath) {
   let dmgFileName = filePath.split(".zip").join(".dmg");
   if (await isDmgAlreadyPresent(filePath)) {
-    log.info("dmg is already present");
+    console.log("dmg is already present");
     return dmgFileName;
   }
   const unzipper = require("unzipper");
@@ -173,7 +176,7 @@ async function extractDmgFile(filePath) {
     if (fileName.includes(".dmg")) {
       entry
         .on("end", () => {
-          log.info("Unzip complete");
+          console.log("Unzip complete");
         })
         .pipe(fs.createWriteStream(dmgFileName));
     } else {
@@ -215,8 +218,8 @@ function downloadZipFile(url, fileName) {
         //         remaining: 81.403       // The remaining seconds to finish (3 decimals)
         //     }
         // }
-        //log.info("progress", state);
-        log.info("downloading", {
+        //console.log("progress", state);
+        console.log("downloading", {
           ...state,
           computed: {
             elapsed: state.time.elapsed,
@@ -227,11 +230,11 @@ function downloadZipFile(url, fileName) {
       })
       .on("error", function (err) {
         // Do something with err
-        log.info("request error", err);
+        console.log("request error", err);
       })
       .on("end", function () {
         // Do something after request finishes
-        log.info("request end");
+        console.log("request end");
         resolve();
       })
       .pipe(fs.createWriteStream(fileName));
