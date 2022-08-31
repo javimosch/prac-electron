@@ -101,7 +101,7 @@ async function removeOlderFiles(name) {
   }
 }
 
-async function processLatestArtifact(artifactList) {
+async function processLatestArtifact() {
   let apiRes = await octokit.request(
     "GET /repos/{owner}/{repo}/actions/artifacts",
     {
