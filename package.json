@@ -1,6 +1,6 @@
 {
     "name": "prak-electron",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "main": "dist/electron/main/index.js",
     "description": "Manage your image files duplicates made simple.",
     "author": "arancibiajav@gmail.com",
@@ -13,8 +13,13 @@
         "build": "cross-env NODE_ENV=production vue-tsc --noEmit && vite build && electron-builder",
         "build:docker": "npm ci && cross-env NODE_ENV=production vite build && electron-builder",
         "docker": "docker run --rm -ti --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS_TAG|TRAVIS|TRAVIS_REPO_|TRAVIS_BUILD_|TRAVIS_BRANCH|TRAVIS_PULL_REQUEST_|APPVEYOR_|CSC_|GH_|GITHUB_|BT_|AWS_|STRIP|BUILD_') --env ELECTRON_CACHE=\"/root/.cache/electron\" --env ELECTRON_BUILDER_CACHE=\"/root/.cache/electron-builder\" -v ${PWD}:/project -v ${PWD##*/}-node-modules:/project/node_modules -v ~/.cache/electron:/root/.cache/electron -v ~/.cache/electron-builder:/root/.cache/electron-builder electronuserland/builder:wine npm run build:docker",
-        "bump:minor": "npx json-bump package.json --minor",
-        "bump:patch": "npx json-bump package.json --patch"
+        "release": "git push origin master && git push gh master:main",
+        "release:mayor": "npx json-bump package.json --mayor && git add package.json && git commit -m 'Bump version' && git push origin master && git push gh master:main",
+        "release:minor": "npx json-bump package.json --minor && git add package.json && git commit -m 'Bump version' && git push origin master && git push gh master:main",
+        "release:patch": "npx json-bump package.json --patch && git add package.json && git commit -m 'Bump version' && git push origin master && git push gh master:main",
+        "bump:mayor": "npx json-bump package.json --mayor && git add package.json && git commit -m 'Bump version' && git push origin master",
+        "bump:minor": "npx json-bump package.json --minor && git add package.json && git commit -m 'Bump version' && git push origin master",
+        "bump:patch": "npx json-bump package.json --patch && git add package.json && git commit -m 'Bump version' && git push origin master"
     },
     "build": {
         "appId": "com.lunardog.prakelectron",
