@@ -34,6 +34,7 @@ let mainActionLabelVerb: { [index: string]: any } = {
 let mainActionLabelPast: { [index: string]: any } = {
   copy: "Copied",
   move: "Moved",
+  clean: "Cleaned",
 };
 
 // Disable GPU Acceleration for Windows 7
@@ -286,6 +287,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   //Force analysis
   isAnalysisComplete = false;
 
+  let existingFilesInTargetDir: any[] = [];
+
   if (!isAnalysisComplete) {
     consoleLog.verbose("Running analysis");
     //Analysis start
@@ -391,7 +394,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in source directories)`
     );
-    let existingFilesInTargetDir = uniqueFiles.filter(
+    existingFilesInTargetDir = uniqueFiles.filter(
       (f: any) => filesInTargetDir.findIndex((ff: any) => ff.md5 == f.md5) >= 0
     );
     currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
@@ -409,32 +412,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     consoleLog.info(
       `${existingFilesInTargetDir.length} files which already exists in target directory will be skip`
     );
-
-    //If "move", remove skipped files from sources
-    if (options.mainAction === "move") {
-      Promise.all(
-        existingFilesInTargetDir.map((f: any) => {
-          return (async () => {
-            if (!options.isDryRun) {
-              sander.rimraf(f.fullname);
-              consoleLog.verbose(
-                `${f.fullname} (Skipped file removed from sources)`
-              );
-            } else {
-              consoleLog.verbose(
-                `${f.fullname} (Skipped file would be removed from sources)`
-              );
-            }
-          })();
-        })
-      ).then(() => {
-        consoleLog.info(
-          `${existingFilesInTargetDir.length} skipped files ${
-            options.isDryRun ? "should have been" : "were"
-          } removed from sources (Because already exists in target directory)`
-        );
-      });
-    }
 
     uniqueFiles.forEach((file: any, index: number) => {
       let hasSomeWithSameName = uniqueFiles.some(
@@ -474,34 +451,56 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
   //=====
 
+  let affectedFilesCount = ["move", "copy"].includes(options.mainAction)
+    ? uniqueFileStats.length
+    : existingFilesInTargetDir.length;
+
   consoleLog.log(
-    `${uniqueFileStats.length} files ${
-      options.isDryRun ? "would be" : "will be"
-    } ${mainActionLabelPast[options.mainAction.toString()]}`
+    `${affectedFilesCount} files ${options.isDryRun ? "would be" : "will be"} ${
+      mainActionLabelPast[options.mainAction.toString()]
+    }`
   );
 
-  console.debug({
-    uniqueFileStats,
-  });
+  //If "move", remove skipped files from sources
+  if (["move", "clean"].includes(options.mainAction)) {
+    Promise.all(
+      existingFilesInTargetDir.map((f: any) => {
+        return (async () => {
+          let reason =
+            options.mainAction === "move"
+              ? "Skip move because already present in target directory"
+              : "already present in target directory";
+          if (!options.isDryRun) {
+            sander.rimraf(f.fullname);
 
-  /* if (options.isDryRun) {
-    consoleLog.info(`Dry Run mode (Abort)`);
-    return;
-  }*/
-
-  //Empty folder rule (target folder)
-  /*
-  let isTargetDirectoryEmpty = await emptyDir(options.targetDirectory);
-  if (!isTargetDirectoryEmpty) {
-    consoleLog.info(`Target directory is not empty (Abort)`);
-    return;
-  }*/
+            consoleLog.verbose(
+              `${f.fullname} (Removed from source) (${reason})`
+            );
+          } else {
+            consoleLog.verbose(
+              `${f.fullname} (Would remove from source) (${reason})`
+            );
+          }
+        })();
+      })
+    ).then(() => {
+      consoleLog.info(
+        `${existingFilesInTargetDir.length} files ${
+          options.isDryRun ? "should have been" : "were"
+        } removed from sources (Because already exists in target directory)`
+      );
+    });
+  }
 
   if (["copy", "move"].includes(options.mainAction)) {
     setTimeout(() => {
       sequential(
         uniqueFileStats.map((file: any) => {
           return async () => {
+            let sourcePath = file.fullname;
+            let sourceBasePath = file.path;
+            let sourceFileName = file.name;
+
             let targetBasePath = options.targetDirectory;
             let targetFileName = file.newName || file.name;
             let targetPath = path.join(targetBasePath, targetFileName);
@@ -509,16 +508,11 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             if (options.targetDirectoryStructure === "flat") {
               if (!options.isDryRun) {
                 if (options.mainAction === "copy") {
-                  await sander
-                    .copyFile(
-                      file.fullname.split(file.name).join("") + file.newName ||
-                        file.name
-                    )
-                    .to(targetPath);
+                  await sander.copyFile(sourcePath).to(targetPath);
                 }
                 if (options.mainAction === "move") {
                   await sander
-                    .rename(file.path, file.name)
+                    .rename(sourceBasePath, sourceFileName)
                     .to(targetBasePath, targetFileName);
                 }
               }

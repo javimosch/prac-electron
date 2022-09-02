@@ -105,6 +105,7 @@ let canRun = computed({
         >
           <n-radio-button value="copy"> Copy </n-radio-button>
           <n-radio-button value="move"> Move </n-radio-button>
+          <n-radio-button value="clean"> Clean </n-radio-button>
         </n-radio-group>
       </NFormItem>
       <NFormItem label="Extensions">
