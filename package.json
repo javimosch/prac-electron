@@ -44,7 +44,6 @@
     "@vicons/material": "^0.12.0",
     "@vicons/utils": "^0.1.4",
     "@vitejs/plugin-vue": "^2.3.3",
-    "@vue/devtools": "^6.2.1",
     "cross-env": "^7.0.3",
     "electron": "^19.0.8",
     "electron-builder": "^23.1.0",
@@ -71,7 +70,6 @@
   ],
   "dependencies": {
     "checksum": "^1.0.0",
-    "crypto": "^1.0.1",
     "electron-cfg": "^1.2.7",
     "electron-log": "^4.4.8",
     "empty-dir": "^2.0.0",
