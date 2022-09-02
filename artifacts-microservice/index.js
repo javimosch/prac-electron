@@ -159,31 +159,39 @@ async function isDmgAlreadyPresent(zipFilePath) {
   return await sander.exists(dmgFileName);
 }
 
-async function extractDmgFile(filePath) {
-  let dmgFileName = filePath.split(".zip").join(".dmg");
-  if (await isDmgAlreadyPresent(filePath)) {
-    console.log("dmg is already present");
-    return dmgFileName;
-  }
-  const unzipper = require("unzipper");
-  const zip = fs
-    .createReadStream(filePath)
-    .pipe(unzipper.Parse({ forceStream: true }));
-  for await (const entry of zip) {
-    const fileName = entry.path;
-    const type = entry.type; // 'Directory' or 'File'
-    const size = entry.vars.uncompressedSize; // There is also compressedSize;
-    if (fileName.includes(".dmg")) {
-      entry
-        .on("end", () => {
-          console.log("Unzip complete");
-        })
-        .pipe(fs.createWriteStream(dmgFileName));
-    } else {
-      entry.autodrain();
+function extractDmgFile(filePath) {
+  return new Promise(async (resolve, reject) => {
+    let dmgFileName = filePath.split(".zip").join(".dmg");
+    if (await isDmgAlreadyPresent(filePath)) {
+      console.log("dmg is already present");
+      return resolve(dmgFileName);
     }
-  }
-  return dmgFileName;
+    let resolved = false;
+    const unzipper = require("unzipper");
+    const zip = fs
+      .createReadStream(filePath)
+      .pipe(unzipper.Parse({ forceStream: true }));
+    for await (const entry of zip) {
+      const fileName = entry.path;
+      const type = entry.type; // 'Directory' or 'File'
+      const size = entry.vars.uncompressedSize; // There is also compressedSize;
+      if (fileName.includes(".dmg")) {
+        entry
+          .on("end", () => {
+            console.log("Unzip complete");
+            setTimeout(() => {
+              if (!resolved) {
+                resolved = true;
+                resolve(dmgFileName);
+              }
+            }, 5000);
+          })
+          .pipe(fs.createWriteStream(dmgFileName));
+      } else {
+        entry.autodrain();
+      }
+    }
+  });
 }
 
 function downloadZipFile(url, fileName) {
