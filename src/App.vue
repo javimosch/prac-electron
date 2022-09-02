@@ -1,5 +1,6 @@
 <script setup>
-import OutputConsole from "./components/OutputConsole.vue";
+import OutputArea from "./components/OutputArea.vue";
+
 import ExecuteSection from "./components/ExecuteSection.vue";
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
@@ -30,33 +31,21 @@ import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
         :date-locale="dateEnUS"
       >
         <n-space vertical>
-          <n-divider>PRAK Electron</n-divider>
-          <n-grid :x-gap="12" cols="1">
+          <n-grid :x-gap="12" cols="3">
             <n-grid-item>
-              <p>
-                Deduplicate files from different directories into an empty
-                folder
-              </p>
-            </n-grid-item>
-          </n-grid>
-          <n-grid :x-gap="12" cols="2">
-            <n-grid-item>
-              <n-divider>Sources</n-divider>
+              <n-divider class="divider-title-red">Sources</n-divider>
               <SourceFolderList />
-              <n-divider>Destination</n-divider>
-              <TargetFolderList />
             </n-grid-item>
             <n-grid-item>
               <ExecuteSection />
             </n-grid-item>
-          </n-grid>
-          <n-grid :x-gap="12" cols="1">
-            <NGridItem>
-              <n-divider>Output</n-divider>
-              <OutputConsole />
-            </NGridItem>
+            <n-grid-item>
+              <n-divider class="divider-title-blue">Destination</n-divider>
+              <TargetFolderList />
+            </n-grid-item>
           </n-grid>
         </n-space>
+        <OutputArea />
       </n-config-provider>
     </ProvidePrakContext>
   </n-loading-bar-provider>

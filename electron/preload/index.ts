@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   analyzeSources: (sources: String[] = [], options: any) =>
     <Promise<any>>ipcRenderer.invoke("analyzeSources", sources, options),
   onEvent: (callback: Function) => {
-    let listener = (event, message) => {
+    let listener = (event: any, message: any) => {
       callback(message);
     };
     ipcRenderer.on("event", listener);

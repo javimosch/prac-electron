@@ -3,12 +3,12 @@ import { release } from "os";
 import { join } from "path";
 import sequential from "./promiseSequence";
 import moment from "moment-timezone";
-const { shell } = require("electron");
-const log = require("electron-log");
-log.catchErrors({
+
+const consoleLog = require("electron-log");
+consoleLog.catchErrors({
   showDialog: true,
 });
-Object.assign(console, log.functions);
+//Object.assign(console, consoleLog.functions);
 
 const path = require("path");
 const cfg = require("electron-cfg");
@@ -19,14 +19,15 @@ const isProduction = process.env.NODE_ENV === "production";
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
 import * as rra from "recursive-readdir-async";
+import { string } from "yargs";
 
 let logLevel = "normal";
 
-let mainActionLabelVerb = {
+let mainActionLabelVerb: { [index: string]: any } = {
   copy: "Copy",
   move: "Move",
 };
-let mainActionLabelPast = {
+let mainActionLabelPast: { [index: string]: any } = {
   copy: "Copied",
   move: "Moved",
 };
@@ -169,10 +170,13 @@ ipcMain.handle("selectSingleFolder", async () => {
   let res;
   win && win.setAlwaysOnTop(false);
   let focusedWindow = win || BrowserWindow.getFocusedWindow();
-
-  res = await dialog.showOpenDialog(focusedWindow, {
-    properties: ["openDirectory"],
-  });
+  if (focusedWindow) {
+    res = await dialog.showOpenDialog(focusedWindow, {
+      properties: ["openDirectory"],
+    });
+  } else {
+    res = { filePaths: [] };
+  }
 
   return res.filePaths;
 });
@@ -181,7 +185,7 @@ ipcMain.handle("openLogsFolder", async () => {
   shell.showItemInFolder(cfg.resolveUserDataPath("logs/main.log"));
 });
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
-  console.debug(
+  consoleLog.debug(
     "analyzeSources",
     JSON.stringify(
       {
@@ -195,12 +199,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   logLevel = options.loggingLevel || logLevel;
 
   if (sources.length === 0) {
-    console.error("Missing source paths");
+    consoleLog.error("Missing source paths");
     return;
   }
 
   if (!options.targetDirectory) {
-    console.error("Missing target directory");
+    consoleLog.error("Missing target directory");
     return;
   }
 
@@ -215,8 +219,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   let uniqueFileStats = currCfg.get("stats", []);
   let isAnalysisComplete = currCfg.get("analysis", false);
 
-  let actions = [];
-
   if (configId != computedConfigId) {
     isAnalysisComplete = false;
   }
@@ -229,11 +231,11 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   isAnalysisComplete = false;
 
   if (!isAnalysisComplete) {
-    console.verbose("Running analysis");
+    consoleLog.verbose("Running analysis");
     //Analysis start
 
-    let readResults = await sequential(
-      sources.map((sourcePath) => {
+    let readResults: any = await sequential(
+      sources.map((sourcePath: string) => {
         return async () => {
           //files
           let files = await rra.list(
@@ -252,22 +254,22 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               readContent: false,
               //encoding: 'base64'
             },
-            function (obj, index, total) {
+            function (obj: any) {
               if (obj.isDirectory) {
                 return;
               }
-              //console.log("File found", obj);
+              //consoleLog.log("File found", obj);
             }
           );
-          return files.map((f) => {
+          return files.map((f: any) => {
             f.sourcePath = sourcePath;
             return f;
           });
         }; //();
       })
     );
-    //console.debug(readResults);
-    let files = readResults.reduce((a, v) => {
+    //consoleLog.debug(readResults);
+    let files = readResults.reduce((a: any[], v: any[]) => {
       a = [...a, ...v];
       return a;
     }, []);
@@ -282,11 +284,11 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       })
     );
 
-    files.forEach((file, index) => {
+    files.forEach((file: any, index: Number) => {
       file.duplicates = files
-        .filter((v, i) => i !== index)
-        .filter((f) => f.md5 == file.md5)
-        .map((f) => f.fullname);
+        .filter((v: any, i: Number) => i !== index)
+        .filter((f: any) => f.md5 == file.md5)
+        .map((f: any) => f.fullname);
     });
 
     //Read files in the target dir
@@ -312,57 +314,58 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       })
     );
 
-    console.info(`${files.length} files detected in source directories`);
+    consoleLog.info(`${files.length} files detected in source directories`);
 
     let uniqueFiles = files.filter(
-      (f, i) => files.findIndex((ff) => ff.md5 == f.md5) == i
+      (f: any, i: Number) => files.findIndex((ff: any) => ff.md5 == f.md5) == i
     );
     let duplicatedFiles = files.filter(
-      (f, i) => !uniqueFiles.some((ff) => ff.fullname == f.fullname) //TODO use unique identifier
+      (f: any, i: Number) =>
+        !uniqueFiles.some((ff: any) => ff.fullname == f.fullname) //TODO use unique identifier
     );
-    duplicatedFiles.forEach((f, i) => {
-      console.verbose(`[${i}] ${f.name} / ${f.md5} duplicated (Skip)`);
+    duplicatedFiles.forEach((f: any, i: Number) => {
+      consoleLog.verbose(`[${i}] ${f.name} / ${f.md5} duplicated (Skip)`);
     });
-    console.info(
+    consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in source directories)`
     );
     let existingFilesInTargetDir = uniqueFiles.filter(
-      (f) => filesInTargetDir.findIndex((ff) => ff.md5 == f.md5) >= 0
+      (f: any) => filesInTargetDir.findIndex((ff: any) => ff.md5 == f.md5) >= 0
     );
     currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
     //filter out existing files in target dir
-    uniqueFiles = uniqueFiles.filter((f, i) => {
-      let r = !existingFilesInTargetDir.some((ff) => ff.md5 == f.md5);
+    uniqueFiles = uniqueFiles.filter((f: any, i: Number) => {
+      let r = !existingFilesInTargetDir.some((ff: any) => ff.md5 == f.md5);
       return r;
     });
-    existingFilesInTargetDir.forEach((f, i) => {
-      console.verbose(
+    existingFilesInTargetDir.forEach((f: any, i: Number) => {
+      consoleLog.verbose(
         `[${i}] ${f.name} / ${f.md5} found in target directory (Skip) `
       );
     });
-    console.info(
+    consoleLog.info(
       `${existingFilesInTargetDir.length} files which already exists in target directory will be skip`
     );
 
     //If "move", remove skipped files from sources
     if (options.mainAction === "move") {
       Promise.all(
-        existingFilesInTargetDir.map((f) => {
+        existingFilesInTargetDir.map((f: any) => {
           return (async () => {
             if (!options.isDryRun) {
               sander.rimraf(f.fullname);
-              console.verbose(
+              consoleLog.verbose(
                 `${f.fullname} (Skipped file removed from sources)`
               );
             } else {
-              console.verbose(
+              consoleLog.verbose(
                 `${f.fullname} (Skipped file would be removed from sources)`
               );
             }
           })();
         })
       ).then(() => {
-        console.info(
+        consoleLog.info(
           `${existingFilesInTargetDir.length} skipped files ${
             options.isDryRun ? "should have been" : "were"
           } removed from sources (Because already exists in target directory)`
@@ -370,14 +373,14 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       });
     }
 
-    console.info(
+    consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
 
     fileStats = files;
     uniqueFileStats = uniqueFiles;
   } else {
-    console.verbose("Restoring analysis");
+    consoleLog.verbose("Restoring analysis");
   }
 
   //Analysis complete
@@ -385,18 +388,18 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   currCfg.set("analysis", isAnalysisComplete);
   currCfg.set("fileStats", fileStats);
   currCfg.set("uniqueFileStats", uniqueFileStats);
-  currCfg.set("timestamp", moment()._d.getTime());
+  currCfg.set("timestamp", moment().toDate().getTime());
   currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
   //=====
 
-  console.log(
+  consoleLog.log(
     `${uniqueFileStats.length} files ${
       options.isDryRun ? "would be" : "will be"
-    } ${mainActionLabelPast[options.mainAction]}`
+    } ${mainActionLabelPast[options.mainAction.toString()]}`
   );
 
   /* if (options.isDryRun) {
-    console.info(`Dry Run mode (Abort)`);
+    consoleLog.info(`Dry Run mode (Abort)`);
     return;
   }*/
 
@@ -404,7 +407,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   /*
   let isTargetDirectoryEmpty = await emptyDir(options.targetDirectory);
   if (!isTargetDirectoryEmpty) {
-    console.info(`Target directory is not empty (Abort)`);
+    consoleLog.info(`Target directory is not empty (Abort)`);
     return;
   }*/
 
@@ -430,11 +433,11 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               }
             }
             if (options.targetDirectoryStructure !== "flat") {
-              console.warn(
+              consoleLog.warn(
                 `${options.targetDirectoryStructure} mode not implemented (Structure)`
               );
             }
-            console.verbose(
+            consoleLog.verbose(
               `${file.fullname} to ${targetPath} ${
                 options.isDryRun
                   ? `(Would be ${mainActionLabelPast[
@@ -449,7 +452,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
           }; //();
         })
       ).then(() => {
-        console.info(
+        consoleLog.info(
           `${mainActionLabelVerb[options.mainAction]} process ended`
         );
         win?.webContents.send("event", {
@@ -463,12 +466,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 });
 
 function getHTMLParagraph(text: String, title = "Info") {
-  //console.log(`${title}: ${text}`);
+  //consoleLog.log(`${title}: ${text}`);
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
 }
 
-log.hooks.push((message, transport) => {
-  if (transport === log.transports.console) {
+consoleLog.hooks.push((message: any, transport: any) => {
+  if (transport === consoleLog.transports.console) {
     if (shouldSendConsoleEvent(message.level)) {
       win?.webContents.send("event", {
         html: getHTMLParagraph(message.data, message.level),
@@ -479,7 +482,7 @@ log.hooks.push((message, transport) => {
   return message;
 });
 
-function shouldSendConsoleEvent(level) {
+function shouldSendConsoleEvent(level: string) {
   if (["error"].includes(level) && logLevel === "error") {
     return true;
   }

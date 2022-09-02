@@ -26,7 +26,7 @@ const getFolderName = computed(() => {
 </script>
 
 <template>
-  <NList>
+  <NList class="my-panel">
     <NListItem v-for="fullPath in sourceFolders" :key="fullPath">
       <p>{{ getFolderName(fullPath) }}</p>
       <p class="full-path">{{ fullPath }}</p>

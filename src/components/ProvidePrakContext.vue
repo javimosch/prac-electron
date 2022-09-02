@@ -12,6 +12,8 @@ export default {
         /*"/home/javi/Documents/download-new"*/
       ]),
       outputResult: ref(""),
+
+      isOutputAreaVisible: ref(false),
     });
     // Using `toRefs()` makes it possible to use
     // spreading in the consuming component.

@@ -14,9 +14,10 @@ import {
   NPopconfirm,
 } from "naive-ui";
 import { PrakStateSymbol } from "../constants.js";
-const { sourceFolders, targetDirectory, outputResult } =
-  inject(PrakStateSymbol);
 import { useLoadingBar } from "naive-ui";
+import moment from "moment";
+const { sourceFolders, targetDirectory, outputResult, isOutputAreaVisible } =
+  inject(PrakStateSymbol);
 
 let loggingLevel = ref("verbose");
 
@@ -48,9 +49,11 @@ onMounted(() => {
       isLoading.value = message.processing;
     }
     if (message.html) {
-      outputResult.value += message.html;
+      outputResult.value =
+        moment().format("HH:mm:ss") + " " + message.html + outputResult.value;
 
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      //window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      isOutputAreaVisible.value = true;
     }
   });
 });
@@ -59,6 +62,7 @@ onUnmounted(() => {
 });
 
 function openLogsFolder() {
+  isOutputAreaVisible.value = true;
   window.electronAPI.openLogsFolder();
 }
 async function executeAnalysis(isDryRun = false) {
@@ -90,7 +94,7 @@ let canRun = computed({
 </script>
 
 <template>
-  <n-divider>Configuration</n-divider>
+  <n-divider class="divider-title">Configuration</n-divider>
   <div class="center">
     <NForm :label-width="80" :size="'small'">
       <NFormItem label="Main action">
