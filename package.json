@@ -71,11 +71,13 @@
   ],
   "dependencies": {
     "checksum": "^1.0.0",
+    "crypto": "^1.0.1",
     "electron-cfg": "^1.2.7",
     "electron-log": "^4.4.8",
     "empty-dir": "^2.0.0",
     "md5-file": "^5.0.0",
     "moment-timezone": "^0.5.37",
+    "nanoid": "^4.0.0",
     "node-readfiles": "^0.3.1",
     "promise-all-sequential": "^1.0.0",
     "promise-sequential": "^1.1.1",
@@ -84,6 +86,7 @@
     "sander": "^0.6.0",
     "sass": "^1.54.4",
     "serve-index": "^1.9.1",
-    "sha-anything": "^0.0.2"
+    "sha-anything": "^0.0.2",
+    "shortid": "^2.2.16"
   }
 }

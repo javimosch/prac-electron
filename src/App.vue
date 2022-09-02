@@ -16,10 +16,22 @@ import {
   NGrid,
   NGridItem,
   NLoadingBarProvider,
+  NPopselect,
+  NCard,
 } from "naive-ui";
 import { lightTheme } from "naive-ui";
 // locale & dateLocale
 import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
+
+import { ref } from "vue";
+
+const options = ref([
+  {
+    label: "Default",
+    value: "default",
+  },
+]);
+const configName = ref("default");
 </script>
 
 <template>
@@ -31,6 +43,22 @@ import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
         :date-locale="dateEnUS"
       >
         <n-space vertical>
+          <n-grid :x-gap="5" cols="1">
+            <n-grid-item>
+              <n-card title="Configuration">
+                <n-popselect
+                  v-model:value="configName"
+                  :options="options"
+                  size="medium"
+                  scrollable
+                >
+                  <n-button style="margin-right: 8px">
+                    {{ configName || "(Select)" }}
+                  </n-button>
+                </n-popselect>
+              </n-card>
+            </n-grid-item>
+          </n-grid>
           <n-grid :x-gap="12" cols="3">
             <n-grid-item>
               <n-divider class="divider-title-red">Sources</n-divider>

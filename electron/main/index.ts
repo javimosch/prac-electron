@@ -3,6 +3,9 @@ import { release } from "os";
 import { join } from "path";
 import sequential from "./promiseSequence";
 import moment from "moment-timezone";
+import * as rra from "recursive-readdir-async";
+//import { customAlphabet } from "nanoid/async";
+//const { customAlphabet } = require("nanoid/async");
 
 const consoleLog = require("electron-log");
 consoleLog.catchErrors({
@@ -16,10 +19,11 @@ const md5File = require("md5-file");
 const emptyDir = require("empty-dir");
 const sander = require("sander");
 const isProduction = process.env.NODE_ENV === "production";
+//const nanoid = customAlphabet("123456789", 10);
+const shortid = require("shortid");
+const nanoid = async (len: number) => shortid.generate();
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
-import * as rra from "recursive-readdir-async";
-import { string } from "yargs";
 
 let logLevel = "normal";
 
@@ -181,10 +185,61 @@ ipcMain.handle("selectSingleFolder", async () => {
   return res.filePaths;
 });
 
+function getCurrCfg(configurationName: string = "default.json"): any {
+  if (!configurationName.includes(".json")) {
+    configurationName += ".json";
+  }
+  return cfg.create(configurationName);
+}
+
 ipcMain.handle("openLogsFolder", async () => {
   shell.showItemInFolder(cfg.resolveUserDataPath("logs/main.log"));
 });
+
+ipcMain.handle(
+  "getConfiguration",
+  async (event, configurationName = "default.json") => {
+    const currCfg = getCurrCfg(configurationName);
+    return {
+      sourceItems: currCfg.get("sourceItems", []),
+      targetItem: currCfg.get("targetItem", {
+        fullPath: "",
+      }),
+    };
+  }
+);
+
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
+  const currCfg = getCurrCfg(options.name);
+
+  currCfg.set(
+    "sourceItems",
+    sources.map((sourcePath: string) => {
+      return {
+        fullPath: sourcePath,
+      };
+    })
+  );
+
+  currCfg.set("targetItem", {
+    fullPath: options.targetDirectory,
+  });
+
+  options.include = (options.include || []).map((ext: string) =>
+    ext.toLowerCase()
+  );
+
+  options.include.forEach((ext: string) => {
+    options.include.push(ext.toUpperCase());
+  });
+
+  if (options.include.includes(".jpg") && !options.include.includes(".jpeg")) {
+    options.include.push(".jpeg");
+  }
+  if (options.include.includes(".jpeg") && !options.include.includes(".jpg")) {
+    options.include.push(".jpg");
+  }
+
   consoleLog.debug(
     "analyzeSources",
     JSON.stringify(
@@ -196,6 +251,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       4
     )
   );
+
+  consoleLog.info("Extensions", options.include);
+
   logLevel = options.loggingLevel || logLevel;
 
   if (sources.length === 0) {
@@ -207,8 +265,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     consoleLog.error("Missing target directory");
     return;
   }
-
-  let currCfg = cfg.create(options.name || "default.json");
 
   let computedConfigId = JSON.stringify({
     sources,
@@ -245,7 +301,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               recursive: true,
               stats: true,
               ignoreFolders: true,
-              extensions: false,
+              extensions: true,
               deep: true,
               realPath: true,
               normalizePath: true,
@@ -274,15 +330,20 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       return a;
     }, []);
 
+    consoleLog.info(`${files.length} detected files (Next: MD5 Generation)`);
+
     await sequential(
       files.map((file: any) => {
         return async () => {
           //grab md5
           let md5 = file.md5 || (await md5File(file.fullname));
           file.md5 = md5;
+          file.uniqueId = await nanoid(5);
         }; //();
       })
     );
+
+    consoleLog.verbose("Filtering out duplicates");
 
     files.forEach((file: any, index: Number) => {
       file.duplicates = files
@@ -305,6 +366,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       include: options.include || [],
       readContent: false,
     });
+    consoleLog.info(
+      `${files.length} files in target dir (Next: MD5 Generation)`
+    );
     await sequential(
       filesInTargetDir.map((file: any) => {
         return async () => {
@@ -314,14 +378,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       })
     );
 
-    consoleLog.info(`${files.length} files detected in source directories`);
-
     let uniqueFiles = files.filter(
       (f: any, i: Number) => files.findIndex((ff: any) => ff.md5 == f.md5) == i
     );
     let duplicatedFiles = files.filter(
       (f: any, i: Number) =>
-        !uniqueFiles.some((ff: any) => ff.fullname == f.fullname) //TODO use unique identifier
+        !uniqueFiles.some((ff: any) => ff.uniqueId == f.uniqueId) //TODO use unique identifier
     );
     duplicatedFiles.forEach((f: any, i: Number) => {
       consoleLog.verbose(`[${i}] ${f.name} / ${f.md5} duplicated (Skip)`);
@@ -333,6 +395,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       (f: any) => filesInTargetDir.findIndex((ff: any) => ff.md5 == f.md5) >= 0
     );
     currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
+
     //filter out existing files in target dir
     uniqueFiles = uniqueFiles.filter((f: any, i: Number) => {
       let r = !existingFilesInTargetDir.some((ff: any) => ff.md5 == f.md5);
@@ -373,6 +436,25 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       });
     }
 
+    uniqueFiles.forEach((file: any, index: number) => {
+      let hasSomeWithSameName = uniqueFiles.some(
+        (f: any, i: number) =>
+          i != index && f.md5 != file.md5 && f.name == file.name && !f.newName
+      );
+      if (hasSomeWithSameName) {
+        file.newName =
+          file.name.split(file.extension).join("") +
+          "_" +
+          file.uniqueId +
+          file.extension;
+        consoleLog.verbose(
+          `${file.fullname} -> ${file.newName} (${
+            options.isDryRun ? "would" : "will"
+          } be renamed)`
+        );
+      }
+    });
+
     consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
@@ -398,6 +480,10 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     } ${mainActionLabelPast[options.mainAction.toString()]}`
   );
 
+  console.debug({
+    uniqueFileStats,
+  });
+
   /* if (options.isDryRun) {
     consoleLog.info(`Dry Run mode (Abort)`);
     return;
@@ -417,13 +503,18 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         uniqueFileStats.map((file: any) => {
           return async () => {
             let targetBasePath = options.targetDirectory;
-            let targetFileName = file.name;
+            let targetFileName = file.newName || file.name;
             let targetPath = path.join(targetBasePath, targetFileName);
 
             if (options.targetDirectoryStructure === "flat") {
               if (!options.isDryRun) {
                 if (options.mainAction === "copy") {
-                  await sander.copyFile(file.fullname).to(targetPath);
+                  await sander
+                    .copyFile(
+                      file.fullname.split(file.name).join("") + file.newName ||
+                        file.name
+                    )
+                    .to(targetPath);
                 }
                 if (options.mainAction === "move") {
                   await sander

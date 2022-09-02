@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("event", listener);
     };
   },
+  getConfiguration: (name: string) =>
+    <Promise<any>>ipcRenderer.invoke("getConfiguration", name),
 });
 
 function domReady(
