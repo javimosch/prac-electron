@@ -297,7 +297,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       sources.map((sourcePath: string) => {
         return async () => {
           //files
-          let files = await rra.list(
+          let files = await rraListWrapper(
             sourcePath,
             {
               mode: rra.LIST,
@@ -357,7 +357,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
     //Read files in the target dir
 
-    let filesInTargetDir = await rra.list(options.targetDirectory, {
+    let filesInTargetDir = await rraListWrapper(options.targetDirectory, {
       mode: rra.LIST,
       recursive: true,
       stats: true,
@@ -368,6 +368,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       normalizePath: true,
       include: options.include || [],
       readContent: false,
+    });
+    console.log({
+      filesInTargetDir,
     });
     consoleLog.info(
       `${files.length} files in target dir (Next: MD5 Generation)`
@@ -461,8 +464,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     }`
   );
 
-  //If "move", remove skipped files from sources
-  if (["move", "clean"].includes(options.mainAction)) {
+  //If clean, remove skipped files from sources
+  if (["clean"].includes(options.mainAction)) {
     Promise.all(
       existingFilesInTargetDir.map((f: any) => {
         return (async () => {
@@ -471,7 +474,13 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               ? "Skip move because already present in target directory"
               : "already present in target directory";
           if (!options.isDryRun) {
-            sander.rimraf(f.fullname);
+            tryCatchAsync(
+              () => sander.rimraf(f.fullname),
+              {
+                path: f.fullname,
+              },
+              "Remove operation fail"
+            );
 
             consoleLog.verbose(
               `${f.fullname} (Removed from source) (${reason})`
@@ -508,12 +517,37 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             if (options.targetDirectoryStructure === "flat") {
               if (!options.isDryRun) {
                 if (options.mainAction === "copy") {
-                  await sander.copyFile(sourcePath).to(targetPath);
+                  await tryCatchAsync(
+                    () => sander.copyFile(sourcePath).to(targetPath),
+                    (err: Error) =>
+                      `Copy operation fail:${JSON.stringify(
+                        {
+                          from: sourcePath,
+                          to: targetPath,
+                          err: err.message,
+                        },
+                        null,
+                        4
+                      )}`
+                  );
                 }
                 if (options.mainAction === "move") {
-                  await sander
-                    .rename(sourceBasePath, sourceFileName)
-                    .to(targetBasePath, targetFileName);
+                  await tryCatchAsync(
+                    () =>
+                      sander
+                        .rename(sourceBasePath, sourceFileName)
+                        .to(targetBasePath, targetFileName),
+                    (err: Error) =>
+                      `Move operation fail :${JSON.stringify(
+                        {
+                          from: path.join(sourceBasePath, sourceFileName),
+                          to: path.join(targetBasePath, targetFileName),
+                          err: err.message,
+                        },
+                        null,
+                        4
+                      )}`
+                  );
                 }
               }
             }
@@ -549,6 +583,70 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
   return;
 });
+
+async function rraListWrapper(path: string, options: any) {
+  let res: any[] = [];
+  await tryCatchAsync(async () => {
+    res = await rra.list.apply(rra, [path, options]);
+    if (res.error) {
+      handleErrorLogging(
+        new Error("Readdir error"),
+        {
+          details: res.error,
+          path: path,
+        },
+        "Failed to read directory"
+      );
+      res = [];
+    }
+  });
+  return res;
+}
+
+function handleErrorLogging(
+  err: any,
+  textOrObjectOrFunction: any = "System error",
+  text: string = ""
+) {
+  if (
+    typeof textOrObjectOrFunction === "string" ||
+    typeof textOrObjectOrFunction === "function"
+  ) {
+    consoleLog.error(
+      typeof textOrObjectOrFunction === "string"
+        ? textOrObjectOrFunction
+        : textOrObjectOrFunction(err)
+    );
+  }
+  if (typeof textOrObjectOrFunction === "object") {
+    consoleLog.error(
+      `${text || "System error"}:${JSON.stringify(
+        {
+          ...(textOrObjectOrFunction || {}),
+          err: err.message,
+        },
+        null,
+        4
+      )}`
+    );
+  }
+}
+
+async function tryCatchAsync(
+  cb: Function,
+  textOrObjectOrFunction: any = "System error",
+  text: string = ""
+) {
+  try {
+    await cb();
+  } catch (err: any) {
+    console.error(err);
+    consoleLog.debug("ERROR", {
+      err,
+    });
+    handleErrorLogging(err, textOrObjectOrFunction, text);
+  }
+}
 
 function getHTMLParagraph(text: String, title = "Info") {
   //consoleLog.log(`${title}: ${text}`);
