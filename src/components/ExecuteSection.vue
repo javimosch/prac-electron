@@ -138,7 +138,7 @@ let canRun = computed({
 
           <n-tooltip trigger="hover">
             <template #trigger>
-              <n-radio-button value="date" disabled> Date </n-radio-button>
+              <n-radio-button value="date"> Date </n-radio-button>
             </template>
             Files will be copied/moved into a hierarchy by date (MM-YYYY
             sub-dictories)
@@ -146,7 +146,7 @@ let canRun = computed({
 
           <n-tooltip trigger="hover">
             <template #trigger>
-              <n-radio-button value="type" disabled> Type </n-radio-button>
+              <n-radio-button value="type"> Type </n-radio-button>
             </template>
             Files will be copied/moved into a hierarchy by Media type (MIME
             types) (i.g jpg, docx, videos sub-dictories)

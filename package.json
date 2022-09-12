@@ -81,6 +81,7 @@
         "electron-log": "^4.4.8",
         "empty-dir": "^2.0.0",
         "md5-file": "^5.0.0",
+        "mime-types": "^2.1.35",
         "moment-timezone": "^0.5.37",
         "node-readfiles": "^0.3.1",
         "promise-all-sequential": "^1.0.0",

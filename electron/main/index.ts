@@ -12,7 +12,7 @@ consoleLog.catchErrors({
   showDialog: true,
 });
 //Object.assign(console, consoleLog.functions);
-
+const mime = require("mime-types");
 const path = require("path");
 const cfg = require("electron-cfg");
 const md5File = require("md5-file");
@@ -327,7 +327,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         }; //();
       })
     );
-    //consoleLog.debug(readResults);
+    consoleLog.debug({
+      readResults,
+    });
     let files = readResults.reduce((a: any[], v: any[]) => {
       a = [...a, ...v];
       return a;
@@ -501,6 +503,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     });
   }
 
+  //COPY OR MOVE MAIN ACTION
   if (["copy", "move"].includes(options.mainAction)) {
     setTimeout(() => {
       sequential(
@@ -514,44 +517,62 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             let targetFileName = file.newName || file.name;
             let targetPath = path.join(targetBasePath, targetFileName);
 
+            //FLAT MODE
             if (options.targetDirectoryStructure === "flat") {
               if (!options.isDryRun) {
-                if (options.mainAction === "copy") {
-                  await tryCatchAsync(
-                    () => sander.copyFile(sourcePath).to(targetPath),
-                    (err: Error) =>
-                      `Copy operation fail:${JSON.stringify(
-                        {
-                          from: sourcePath,
-                          to: targetPath,
-                          err: err.message,
-                        },
-                        null,
-                        4
-                      )}`
-                  );
-                }
-                if (options.mainAction === "move") {
-                  await tryCatchAsync(
-                    () =>
-                      sander
-                        .rename(sourceBasePath, sourceFileName)
-                        .to(targetBasePath, targetFileName),
-                    (err: Error) =>
-                      `Move operation fail :${JSON.stringify(
-                        {
-                          from: path.join(sourceBasePath, sourceFileName),
-                          to: path.join(targetBasePath, targetFileName),
-                          err: err.message,
-                        },
-                        null,
-                        4
-                      )}`
-                  );
-                }
+                await copyOrMoveFile(
+                  options.mainAction,
+                  sourceBasePath,
+                  sourceFileName,
+                  targetBasePath,
+                  targetFileName
+                );
               }
             }
-            if (options.targetDirectoryStructure !== "flat") {
+
+            //DATE MODE
+            if (
+              options.targetDirectoryStructure === "date" &&
+              !options.isDryRun
+            ) {
+              let createdDate = moment(file.stats.ctime);
+              targetBasePath = path.join(
+                targetBasePath,
+                createdDate.format("YYYY"),
+                createdDate.format("MM"),
+                createdDate.format("DD")
+              );
+              await copyOrMoveFile(
+                options.mainAction,
+                sourceBasePath,
+                sourceFileName,
+                targetBasePath,
+                targetFileName
+              );
+            }
+
+            //TYPE MODE
+            if (
+              options.targetDirectoryStructure === "type" &&
+              !options.isDryRun
+            ) {
+              let mimeType = mime.lookup(targetFileName).split("/").join("-");
+              mimeType = mimeType || "unknown";
+              targetBasePath = path.join(targetBasePath, mimeType);
+              await copyOrMoveFile(
+                options.mainAction,
+                sourceBasePath,
+                sourceFileName,
+                targetBasePath,
+                targetFileName
+              );
+            }
+
+            if (
+              !["flat", "date", "type"].includes(
+                options.targetDirectoryStructure
+              )
+            ) {
               consoleLog.warn(
                 `${options.targetDirectoryStructure} mode not implemented (Structure)`
               );
@@ -583,6 +604,57 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
   return;
 });
+
+async function copyOrMoveFile(
+  mainAction: string,
+  sourceBasePath: string,
+  sourceFileName: string,
+  targetBasePath: string,
+  targetFileName: string
+) {
+  let targetPath = path.join(targetBasePath, targetFileName);
+  if (mainAction === "copy") {
+    await copyFile(path.join(sourceBasePath, sourceFileName), targetPath);
+  }
+  if (mainAction === "move") {
+    await moveFile(
+      sourceBasePath,
+      sourceFileName,
+      targetBasePath,
+      targetFileName
+    );
+  }
+}
+
+async function copyFile(sourcePath: string, targetPath: string) {
+  await tryCatchAsync(
+    () => sander.copyFile(sourcePath).to(targetPath),
+    {
+      from: sourcePath,
+      to: targetPath,
+    },
+    "Copy operation fail"
+  );
+}
+
+async function moveFile(
+  sourceBasePath: string,
+  sourceFileName: string,
+  targetBasePath: string,
+  targetFileName: string
+) {
+  await tryCatchAsync(
+    () =>
+      sander
+        .rename(sourceBasePath, sourceFileName)
+        .to(targetBasePath, targetFileName),
+    {
+      from: path.join(sourceBasePath, sourceFileName),
+      to: path.join(targetBasePath, targetFileName),
+    },
+    "Move operation fail"
+  );
+}
 
 async function rraListWrapper(path: string, options: any) {
   let res: any[] = [];
