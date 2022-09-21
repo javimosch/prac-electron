@@ -519,6 +519,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
             //FLAT MODE
             if (options.targetDirectoryStructure === "flat") {
+              targetPath = path.join(targetBasePath, targetFileName);
               if (!options.isDryRun) {
                 await copyOrMoveFile(
                   options.mainAction,
@@ -531,10 +532,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             }
 
             //DATE MODE
-            if (
-              options.targetDirectoryStructure === "date" &&
-              !options.isDryRun
-            ) {
+            if (options.targetDirectoryStructure === "date") {
               let createdDate = moment(file.stats.ctime);
               targetBasePath = path.join(
                 targetBasePath,
@@ -542,30 +540,37 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                 createdDate.format("MM"),
                 createdDate.format("DD")
               );
-              await copyOrMoveFile(
-                options.mainAction,
-                sourceBasePath,
-                sourceFileName,
-                targetBasePath,
-                targetFileName
-              );
+              targetPath = path.join(targetBasePath, targetFileName);
+              if (!options.isDryRun) {
+                await copyOrMoveFile(
+                  options.mainAction,
+                  sourceBasePath,
+                  sourceFileName,
+                  targetBasePath,
+                  targetFileName
+                );
+              }
             }
 
             //TYPE MODE
-            if (
-              options.targetDirectoryStructure === "type" &&
-              !options.isDryRun
-            ) {
-              let mimeType = mime.lookup(targetFileName).split("/").join("-");
+            if (options.targetDirectoryStructure === "type") {
+              let mimeType = mime.lookup(targetFileName);
+              if (!mimeType) {
+                mimeType = file.extension.split(".").join(""); //Fallback to grabing the ext as it is
+              }
+              mimeType = mimeType.split("/").join("-");
               mimeType = mimeType || "unknown";
               targetBasePath = path.join(targetBasePath, mimeType);
-              await copyOrMoveFile(
-                options.mainAction,
-                sourceBasePath,
-                sourceFileName,
-                targetBasePath,
-                targetFileName
-              );
+              targetPath = path.join(targetBasePath, targetFileName);
+              if (!options.isDryRun) {
+                await copyOrMoveFile(
+                  options.mainAction,
+                  sourceBasePath,
+                  sourceFileName,
+                  targetBasePath,
+                  targetFileName
+                );
+              }
             }
 
             if (
