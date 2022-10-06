@@ -1,0 +1,12 @@
+Font Logo:
+ Aclónica
+
+Font textos:
+Albert Sans
+
+Colores:
+#694C59. (Bordo oscuro)
+#966D7F (Bordó claro)
+#CEDBCC (verde muy Blanco)
+#77966D (Verde claro)
+#52694C (Verde oscuro)

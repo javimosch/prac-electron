@@ -7,13 +7,21 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
+    BigButton: typeof import('./src/components/BigButton.vue')['default']
+    BrandCenter: typeof import('./src/components/BrandCenter.vue')['default']
+    BrandLeft: typeof import('./src/components/BrandLeft.vue')['default']
     ExecuteSection: typeof import('./src/components/ExecuteSection.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     LoggingLevels: typeof import('./src/components/LoggingLevels.vue')['default']
     OutputArea: typeof import('./src/components/OutputArea.vue')['default']
     OutputConsole: typeof import('./src/components/OutputConsole.vue')['default']
     ProvidePrakContext: typeof import('./src/components/ProvidePrakContext.vue')['default']
+    SelectMultiple: typeof import('./src/components/SelectMultiple.vue')['default']
     SourceFolderList: typeof import('./src/components/SourceFolderList.vue')['default']
+    StepOne: typeof import('./src/components/StepOne.vue')['default']
+    StepTwoBar: typeof import('./src/components/StepTwoBar.vue')['default']
+    StepZero: typeof import('./src/components/StepZero.vue')['default']
+    StepZeroBar: typeof import('./src/components/StepZeroBar.vue')['default']
     TargetFolderList: typeof import('./src/components/TargetFolderList.vue')['default']
   }
 }

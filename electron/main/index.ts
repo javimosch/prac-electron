@@ -64,12 +64,15 @@ let win: BrowserWindow | null = null;
 // Here, you can also use other preload
 const preload = join(__dirname, "../preload/index.js");
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin
-const url = `http://${process.env["VITE_DEV_SERVER_HOST"]}:${process.env["VITE_DEV_SERVER_PORT"]}`;
+
+const url = `http://${process.env["VITE_DEV_SERVER_HOSTNAME"]}:${process.env["VITE_DEV_SERVER_PORT"]}`;
 const indexHtml = join(ROOT_PATH.dist, "index.html");
 
 async function createWindow() {
   const winCfg = cfg.window();
   win = new BrowserWindow({
+    minWidth: 968,
+    minHeight:768,
     title: "Main window",
     icon: join(ROOT_PATH.public, "favicon.ico"),
     webPreferences: {
@@ -87,6 +90,7 @@ async function createWindow() {
   if (app.isPackaged) {
     win.loadFile(indexHtml);
   } else {
+    console.log('loadURL', url);
     win.loadURL(url);
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
@@ -143,6 +147,7 @@ ipcMain.handle("open-win", (event, arg) => {
   if (app.isPackaged) {
     childWindow.loadFile(indexHtml, { hash: arg });
   } else {
+    consoleLog.log('loadURL', url)
     childWindow.loadURL(`${url}/#${arg}`);
     // childWindow.webContents.openDevTools({ mode: "undocked", activate: true })
   }

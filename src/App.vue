@@ -5,7 +5,7 @@ import ExecuteSection from "./components/ExecuteSection.vue";
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
 import SourceFolderList from "./components/SourceFolderList.vue";
-
+import StepZero from "./components/StepZero.vue";
 import {
   NButton,
   NConfigProvider,
@@ -32,6 +32,15 @@ const options = ref([
   },
 ]);
 const configName = ref("default");
+
+let viewName = ref('StepOne')
+
+
+
+function gotoView(viewNameParam){
+  viewName.value = viewNameParam
+}
+
 </script>
 
 <template>
@@ -42,7 +51,12 @@ const configName = ref("default");
         :locale="enUS"
         :date-locale="dateEnUS"
       >
-        <n-space vertical>
+      
+        <StepZero @click="gotoView('StepOne')" v-if="viewName==='StepZero'"/>
+        <StepOne @clickNext="gotoView('app')" v-if="viewName==='StepOne'"/>
+      
+
+        <n-space vertical v-if="viewName==='app'">
           <n-grid :x-gap="5" cols="1">
             <n-grid-item>
               <n-card title="Configuration">

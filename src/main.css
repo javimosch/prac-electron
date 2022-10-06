@@ -1,3 +1,23 @@
+:root{
+    --grey: #694C59;
+    --grey-light: #966D7F;
+    --sand:#CEDBCC;
+}
+
+@font-face {
+    font-family: 'Aclonica';
+    src: url('./fonts/Aclonica-Regular.eot');
+    src: url('./fonts/Aclonica-Regular.eot?#iefix') format('embedded-opentype'),
+        url('./fonts/Aclonica-Regular.woff2') format('woff2'),
+        url('./fonts/Aclonica-Regular.woff') format('woff'),
+        url('./fonts/Aclonica-Regular.ttf') format('truetype'),
+        url('./fonts/Aclonica-Regular.svg#Aclonica-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+
 body{
     background: linear-gradient(92deg, #ff000061, #ffffff66);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
