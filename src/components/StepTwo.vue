@@ -16,7 +16,7 @@ import {
 import { PrakStateSymbol } from "../constants.js";
 import { useLoadingBar } from "naive-ui";
 import moment from "moment";
-const { sourceFolders, targetDirectory, outputResult, isOutputAreaVisible } =
+const { sourceFolders, targetDirectory, outputResult, isOutputAreaVisible, extensions } =
   inject(PrakStateSymbol);
 
 let loggingLevel = ref("verbose");
@@ -24,7 +24,7 @@ let loggingLevel = ref("verbose");
 //Test
 
 let formValue = ref({
-  extensions: "jpg, png, gif, svg",
+  //extensions: "jpg, png, gif, svg",
   targetDirectoryStructure: "flat",
   mainAction: "copy",
 });
@@ -61,6 +61,12 @@ onUnmounted(() => {
   unbindOnEvent();
 });
 
+function normalizeExtensions(extensions) {
+  return extensions.value.map(v=>v.value)
+    .filter((v) => !!v)
+    .map((v) => `.` + v.split(".").join("").trim());
+}
+
 function openLogsFolder() {
   isOutputAreaVisible.value = true;
   window.electronAPI.openLogsFolder();
@@ -75,10 +81,8 @@ async function executeAnalysis(isDryRun = false) {
     mainAction: formValue.value.mainAction,
     targetDirectoryStructure: formValue.value.targetDirectoryStructure,
     targetDirectory: targetDirectory.value[0],
-    include: formValue.value.extensions
-      .split(",")
-      .filter((v) => !!v)
-      .map((v) => `.` + v.split(".").join("").trim()),
+    //include: normalizeExtensions(formValue.value.extensions.split(","))
+    include: normalizeExtensions(extensions)
   });
   isLoading.value = false;
   loadingBar.finish();
@@ -94,9 +98,9 @@ let canRun = computed({
 </script>
 
 <template>
-  <n-divider class="divider-title">Configuration</n-divider>
-  <div class="center">
-    <NForm :label-width="80" :size="'small'">
+  
+  <StepsLayout>
+    <NForm :label-width="80" :size="'small'" style="background-color: none;">
       <NFormItem label="Main action">
         <n-radio-group
           v-model:value="formValue.mainAction"
@@ -108,7 +112,8 @@ let canRun = computed({
           <n-radio-button value="clean"> Clean </n-radio-button>
         </n-radio-group>
       </NFormItem>
-      <NFormItem label="Extensions">
+
+      <NFormItem label="Extensions" v-if="false">
         <n-input v-model:value="formValue.extensions" placeholder="jpg, png" />
       </NFormItem>
 
@@ -175,6 +180,15 @@ let canRun = computed({
 
       <NButton @click="openLogsFolder">Logs</NButton>
     </NSpace>
-  </div>
+    <OverviewText style="margin-top:50px;"/>
+  </StepsLayout>
+
 </template>
-<style scoped></style>
+<style scoped>
+  .center{
+    background-color: var(--sand);
+    display: flex;
+    flex-direction: column;
+
+  }
+</style>

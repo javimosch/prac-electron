@@ -1,15 +1,15 @@
 <script setup>
-import { NButton, NList, NListItem } from "naive-ui";
-import { ClearFilled } from "@vicons/material";
-import { ref, computed, inject } from "vue";
-import { Icon } from "@vicons/utils";
+import { computed, inject } from "vue";
 
+
+import sourceCloudIcon from "@/assets/source-cloud.svg";
+import sourceDiskIcon from "@/assets/source-disk.svg";
+import sourceSdCardIcon from "@/assets/source-sd-card.svg";
 import { PrakStateSymbol } from "../constants.js";
+
 const { targetDirectory } = inject(PrakStateSymbol);
 
-//let targetDirectory: Ref<string[]> = ref(["/home/javi/Documents/download-new"]);
-
-async function selectMultipleFolders() {
+async function selectSingleFolder() {
   let paths = (await window.electronAPI.selectSingleFolder()) || [];
   targetDirectory.value = paths;
 }
@@ -25,28 +25,38 @@ const getFolderName = computed(() => {
 });
 </script>
 
-<template>
-  <NList class="my-panel">
-    <NListItem v-for="fullPath in targetDirectory" :key="fullPath">
-      <p>{{ getFolderName(fullPath) }}</p>
-      <p class="full-path">{{ fullPath }}</p>
-      <template #suffix>
-        <n-button @click="removeFolder(fullPath)">
-          <Icon>
-            <ClearFilled />
-          </Icon>
-        </n-button>
-      </template>
-    </NListItem>
-    <template #footer>
-      <n-button @click="selectMultipleFolders">Set destination</n-button>
-    </template>
-  </NList>
+<template lang="pug">
+VeryBigButton(@click="selectSingleFolder")
+  span Select Target
+  img(:src="sourceCloudIcon")
+  img(:src="sourceDiskIcon")
+  img(:src="sourceSdCardIcon")
+.paths
+  .path(v-for="fullPath in targetDirectory" :key="fullPath")
+    p Folder name: {{getFolderName(fullPath)}}
+    p Full path: {{fullPath}}
 </template>
 
 <style scoped>
 .full-path {
   font-size: 12px;
   word-break: break-word;
+}
+
+.paths{
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  row-gap:10px;
+  margin-top:20px;
+}
+.path{
+  color:white;
+  font-family: "Aclonica";
+  font-size:12px;
+}
+
+img {
+  max-width: 50px;
 }
 </style>

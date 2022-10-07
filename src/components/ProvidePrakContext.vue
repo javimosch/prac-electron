@@ -14,6 +14,8 @@ export default {
       outputResult: ref(""),
 
       isOutputAreaVisible: ref(false),
+
+      extensions: ref([])
     });
     // Using `toRefs()` makes it possible to use
     // spreading in the consuming component.

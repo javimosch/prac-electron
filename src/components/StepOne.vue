@@ -2,8 +2,13 @@
 .steps
     StepZeroBar
     .main
-        SelectMultiple(title="FIND DUPLICATES BY EXTENSIONS")
+        SourceFolderList
+        TargetFolderList
+        ExtensionsSelect
+        BigButton(@click="$emit('clickNext')") Next
     StepTwoBar
+    StepThreeBar
+    StepFourBar
 </template>
 <script setup>
 </script>
@@ -17,5 +22,10 @@
     .main{
         padding:20px;
         background-color: var(--grey-light);
+        display:flex;
+        flex-direction: column;
+        justify-content: start;
+        row-gap:20px;
+        width: calc(100vw - 240px);
     }
 </style>

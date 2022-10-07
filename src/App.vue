@@ -1,7 +1,7 @@
 <script setup>
 import OutputArea from "./components/OutputArea.vue";
 
-import ExecuteSection from "./components/ExecuteSection.vue";
+
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
 import SourceFolderList from "./components/SourceFolderList.vue";
@@ -52,12 +52,13 @@ function gotoView(viewNameParam){
         :date-locale="dateEnUS"
       >
       
-        <StepZero @click="gotoView('StepOne')" v-if="viewName==='StepZero'"/>
-        <StepOne @clickNext="gotoView('app')" v-if="viewName==='StepOne'"/>
-      
+        <StepZero @click="gotoView('StepOne')" @gotoStep="n=>gotoView(n)" v-if="viewName==='StepZero'"/>
+        <StepOne @clickNext="gotoView('StepTwo')" @gotoStep="n=>gotoView(n)" v-if="viewName==='StepOne'"/>
+        <StepTwo v-if="viewName==='StepTwo'" @gotoStep="n=>gotoView(n)" />
+        <OutputArea v-if="viewName==='StepTwo'"/>
 
-        <n-space vertical v-if="viewName==='app'">
-          <n-grid :x-gap="5" cols="1">
+        <n-space vertical  v-if="false">
+          <n-grid :x-gap="5" cols="1" v-if="false">
             <n-grid-item>
               <n-card title="Configuration">
                 <n-popselect
@@ -73,18 +74,12 @@ function gotoView(viewNameParam){
               </n-card>
             </n-grid-item>
           </n-grid>
-          <n-grid :x-gap="12" cols="3">
+          <n-grid :x-gap="12" cols="1">
+            
             <n-grid-item>
-              <n-divider class="divider-title-red">Sources</n-divider>
-              <SourceFolderList />
+              
             </n-grid-item>
-            <n-grid-item>
-              <ExecuteSection />
-            </n-grid-item>
-            <n-grid-item>
-              <n-divider class="divider-title-blue">Destination</n-divider>
-              <TargetFolderList />
-            </n-grid-item>
+            
           </n-grid>
         </n-space>
         <OutputArea />
