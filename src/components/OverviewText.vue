@@ -1,15 +1,30 @@
 <template lang="pug">
 .overview
-    span Breadcrumbs:
-    span {{targetDirectory.map(str=>getFolderName(str)).join(',')}}
-    span -
-    span {{sourceFolders.map(str=>getFolderName(str)).join(',')}}
+    span.title Overview:
+    
+    span Source folders: {{sourceFolders.map(str=>getFolderName(str)).join(',')}}
 
+    span Target folder: {{targetDirectory.map(str=>getFolderName(str)).join(',')}}
+    .target-structure Target structure: {{targetDirectoryStructure}}
+    .main-action Current action: {{mainAction}}
+    .extensions Extensions: {{extensions.map(ext=>ext.text).join(', ')}}
+    .status Status: {{formatStatus(status)}}
 </template>
 <script setup>
 import { PrakStateSymbol } from "../constants.js";
 import { inject,computed } from "vue";
-const { sourceFolders, targetDirectory, extensions } = inject(PrakStateSymbol);
+const { sourceFolders, targetDirectory, extensions, status,mainAction, targetDirectoryStructure } = inject(PrakStateSymbol);
+
+function formatStatus(status){
+  switch(status){
+    case 'analysis_required':
+      return 'Require analysis'
+    case 'analysis_in_progress':
+      return 'Analyzing...'
+    case 'analysis_complete':
+      return 'Analysis complete'
+  }
+}
 
 const getFolderName = computed(() => {
   return (fullPath) => fullPath.split("/")[fullPath.split("/").length - 1];
@@ -17,11 +32,18 @@ const getFolderName = computed(() => {
 </script>
 <style scoped>
 .overview {
+  font-family: "Lato", sans-serif;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   column-gap: 10px;
-  font-size: 16px;
-  border:2px solid black;
+  font-size: 18px;
+  border:2px solid grey;
   padding:15px 20px;
+  color:black;
+  font-weight: 300;
+  flex-direction: column;
+}
+.title{
+  font-weight: 400;
 }
 </style>

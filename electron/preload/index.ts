@@ -17,6 +17,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("event", listener);
     };
   },
+  onAnalysisStat: (callback: Function) => {
+    let listener = (event: any, message: any) => {
+      callback(message);
+    };
+    ipcRenderer.on("analysis_stat", listener);
+    return () => {
+      ipcRenderer.removeListener("analysis_stat", listener);
+    };
+  },
   getConfiguration: (name: string) =>
     <Promise<any>>ipcRenderer.invoke("getConfiguration", name),
 });

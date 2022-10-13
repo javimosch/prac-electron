@@ -298,6 +298,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     consoleLog.verbose("Running analysis");
     //Analysis start
 
+    let readResultsPartial:any = []
     let readResults: any = await sequential(
       sources.map((sourcePath: string) => {
         return async () => {
@@ -318,11 +319,30 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               readContent: false,
               //encoding: 'base64'
             },
-            function (obj: any) {
+            function (obj: any, index: Number, total: Number) {
+              //console.log(`${index} of ${total} ${obj.path}`)
+              
+              //console.log("File found", obj);
+              
               if (obj.isDirectory) {
                 return;
               }
-              //consoleLog.log("File found", obj);
+
+              if(options.include.length===0||options.include.some((str: String)=>str.toLowerCase()==obj.extension.toLowerCase())){
+                //consoleLog.log("File found (MATCH)", obj);
+                readResultsPartial.push(obj)
+                win?.webContents.send("analysis_stat", {
+                  sourceFileCount: readResultsPartial.length,
+                  sourceFilesSizeTotal: readResultsPartial.reduce((a:Number,v:any)=>{
+                    return a+v.stats.size
+                  },0)
+                });
+              }else{
+               // console.log("File found ", obj,obj.extension.split('.').join('').toLowerCase());
+              }
+
+              
+              
             }
           );
           return files.map((f: any) => {
@@ -332,9 +352,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         }; //();
       })
     );
-    consoleLog.debug({
+   /* consoleLog.debug({
       readResults,
-    });
+    });*/
     let files = readResults.reduce((a: any[], v: any[]) => {
       a = [...a, ...v];
       return a;
@@ -666,10 +686,11 @@ async function moveFile(
   );
 }
 
-async function rraListWrapper(path: string, options: any) {
+async function rraListWrapper(path: string, options: any, callback: Function) {
+  callback = callback || (()=>{})
   let res: any[] = [];
   await tryCatchAsync(async () => {
-    res = await rra.list.apply(rra, [path, options]);
+    res = await rra.list.apply(rra, [path, options, callback]);
     if (res.error) {
       handleErrorLogging(
         new Error("Readdir error"),

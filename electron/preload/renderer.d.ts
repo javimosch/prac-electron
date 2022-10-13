@@ -4,6 +4,7 @@ export interface IElectronAPI {
   selectSingleFolder: () => Promise<string[]>;
   analyzeSources: (sources: String[], options: any) => Promise<void>;
   onEvent: (callback: Function) => any;
+  onAnalysisStat: (callback: Function) => any;
   getConfiguration: (name: string) => any[];
 }
 

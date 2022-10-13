@@ -7,6 +7,9 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
+    AnalysisExtensionsStats: typeof import('./src/components/AnalysisExtensionsStats.vue')['default']
+    AnalysisStat: typeof import('./src/components/AnalysisStat.vue')['default']
+    AnalysisView: typeof import('./src/components/AnalysisView.vue')['default']
     BigButton: typeof import('./src/components/BigButton.vue')['default']
     BrandCenter: typeof import('./src/components/BrandCenter.vue')['default']
     BrandLeft: typeof import('./src/components/BrandLeft.vue')['default']
@@ -14,12 +17,17 @@ declare module '@vue/runtime-core' {
     ExtensionsSelect: typeof import('./src/components/ExtensionsSelect.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     LoggingLevels: typeof import('./src/components/LoggingLevels.vue')['default']
+    NormalButton: typeof import('./src/components/NormalButton.vue')['default']
     OutputArea: typeof import('./src/components/OutputArea.vue')['default']
     OutputConsole: typeof import('./src/components/OutputConsole.vue')['default']
     OverviewText: typeof import('./src/components/OverviewText.vue')['default']
+    ProcessingView: typeof import('./src/components/ProcessingView.vue')['default']
     ProvidePrakContext: typeof import('./src/components/ProvidePrakContext.vue')['default']
+    ResultStat: typeof import('./src/components/ResultStat.vue')['default']
     SelectMultiple: typeof import('./src/components/SelectMultiple.vue')['default']
     SourceFolderList: typeof import('./src/components/SourceFolderList.vue')['default']
+    SourceTargetView: typeof import('./src/components/SourceTargetView.vue')['default']
+    StartView: typeof import('./src/components/StartView.vue')['default']
     StepFour: typeof import('./src/components/StepFour.vue')['default']
     StepFourBar: typeof import('./src/components/StepFourBar.vue')['default']
     StepOne: typeof import('./src/components/StepOne.vue')['default']
@@ -27,11 +35,13 @@ declare module '@vue/runtime-core' {
     StepsLayout: typeof import('./src/components/StepsLayout.vue')['default']
     StepThree: typeof import('./src/components/StepThree.vue')['default']
     StepThreeBar: typeof import('./src/components/StepThreeBar.vue')['default']
+    StepTitle: typeof import('./src/components/StepTitle.vue')['default']
     StepTwo: typeof import('./src/components/StepTwo.vue')['default']
     StepTwoBar: typeof import('./src/components/StepTwoBar.vue')['default']
     StepZero: typeof import('./src/components/StepZero.vue')['default']
     StepZeroBar: typeof import('./src/components/StepZeroBar.vue')['default']
     TargetFolderList: typeof import('./src/components/TargetFolderList.vue')['default']
+    TargetStructureSelect: typeof import('./src/components/TargetStructureSelect.vue')['default']
     VeryBigButton: typeof import('./src/components/VeryBigButton.vue')['default']
   }
 }

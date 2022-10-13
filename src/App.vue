@@ -1,11 +1,10 @@
 <script setup>
 import OutputArea from "./components/OutputArea.vue";
 
-
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
 import SourceFolderList from "./components/SourceFolderList.vue";
-import StepZero from "./components/StepZero.vue";
+import StepZero from "./components/StartView.vue";
 import {
   NButton,
   NConfigProvider,
@@ -33,14 +32,11 @@ const options = ref([
 ]);
 const configName = ref("default");
 
-let viewName = ref('StepOne')
+let viewName = ref("StartView");
 
-
-
-function gotoView(viewNameParam){
-  viewName.value = viewNameParam
+function gotoView(viewNameParam) {
+  viewName.value = viewNameParam;
 }
-
 </script>
 
 <template>
@@ -51,13 +47,31 @@ function gotoView(viewNameParam){
         :locale="enUS"
         :date-locale="dateEnUS"
       >
-      
-        <StepZero @click="gotoView('StepOne')" @gotoStep="n=>gotoView(n)" v-if="viewName==='StepZero'"/>
-        <StepOne @clickNext="gotoView('StepTwo')" @gotoStep="n=>gotoView(n)" v-if="viewName==='StepOne'"/>
-        <StepTwo v-if="viewName==='StepTwo'" @gotoStep="n=>gotoView(n)" />
-        <OutputArea v-if="viewName==='StepTwo'"/>
+        <StartView
+          @click="gotoView('SourceTargetView')"
+          @gotoStep="(n) => gotoView(n)"
+          v-if="viewName === 'StartView'"
+        />
+        <SourceTargetView
+          @clickNext="gotoView('AnalysisView')"
+          @gotoStep="(n) => gotoView(n)"
+          v-if="viewName === 'SourceTargetView'"
+        />
+        <AnalysisView
+          v-if="viewName === 'AnalysisView'"
+          @gotoStep="(n) => gotoView(n)"
+        />
 
-        <n-space vertical  v-if="false">
+        <ProcessingView
+          v-if="viewName === 'ProcessingView'"
+          @gotoStep="(n) => gotoView(n)"
+        />
+
+        <OutputArea
+          v-show="viewName === 'AnalysisView' || viewName === 'ProcessingView'"
+        />
+
+        <n-space vertical v-if="false">
           <n-grid :x-gap="5" cols="1" v-if="false">
             <n-grid-item>
               <n-card title="Configuration">
@@ -75,11 +89,7 @@ function gotoView(viewNameParam){
             </n-grid-item>
           </n-grid>
           <n-grid :x-gap="12" cols="1">
-            
-            <n-grid-item>
-              
-            </n-grid-item>
-            
+            <n-grid-item> </n-grid-item>
           </n-grid>
         </n-space>
         <OutputArea />

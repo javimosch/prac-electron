@@ -8,7 +8,6 @@
         BigButton(@click="$emit('clickNext')") Next
     StepTwoBar
     StepThreeBar
-    StepFourBar
 </template>
 <script setup>
 </script>
@@ -26,6 +25,6 @@
         flex-direction: column;
         justify-content: start;
         row-gap:20px;
-        width: calc(100vw - 240px);
+        width: calc(100vw - 200px);
     }
 </style>

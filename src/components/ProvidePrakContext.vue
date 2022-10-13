@@ -2,8 +2,19 @@
 // src/components/ProvidePrakContext.js
 import { provide, reactive, readonly, toRefs, ref } from "vue";
 import { PrakStateSymbol } from "../constants.js";
+import moment from "moment";
 export default {
   setup() {
+    const status = ref("analysis_required");
+
+    const reset = ref(function () {
+      status.value = "analysis_required";
+      state.mainAction = "copy";
+      state.targetDirectoryStructure = "flat";
+      state.outputResult = "";
+      state.isOutputAreaVisible = false;
+    });
+
     const state = reactive({
       sourceFolders: ref([
         /*"/home/javi/Downloads"*/
@@ -15,8 +26,17 @@ export default {
 
       isOutputAreaVisible: ref(false),
 
-      extensions: ref([])
+      extensions: ref([]),
+
+      status,
+
+      mainAction: ref("copy"),
+      targetDirectoryStructure: ref("flat"),
+      reset,
     });
+
+    state.reset();
+
     // Using `toRefs()` makes it possible to use
     // spreading in the consuming component.
     // Making the return value `readonly()` prevents
@@ -40,6 +60,28 @@ export default {
     // Our provider component is a renderless component
     // it does not render any markup of its own.
     return this.$slots.default();
+  },
+  mounted() {
+    this.unbindOnEvent = window.electronAPI.onEvent((message) => {
+      console.log('Event',{
+        message
+      })
+      if (message.processing !== undefined) {
+        this.state.isLoading = message.processing;
+      }
+      if (message.html) {
+        this.state.outputResult =
+          moment().format("HH:mm:ss") +
+          " " +
+          message.html +
+          this.state.outputResult;
+
+        this.state.isOutputAreaVisible = true;
+      }
+    });
+  },
+  beforeUnmount() {
+    unbindOnEvent();
   },
 };
 </script>
