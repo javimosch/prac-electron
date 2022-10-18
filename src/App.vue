@@ -1,5 +1,4 @@
 <script setup>
-import OutputArea from "./components/OutputArea.vue";
 
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
@@ -32,7 +31,7 @@ const options = ref([
 ]);
 const configName = ref("default");
 
-let viewName = ref("StartView");
+let viewName = ref("AnalysisView");
 
 function gotoView(viewNameParam) {
   viewName.value = viewNameParam;
@@ -55,7 +54,7 @@ function gotoView(viewNameParam) {
         <SourceTargetView
           @clickNext="gotoView('AnalysisView')"
           @gotoStep="(n) => gotoView(n)"
-          v-if="viewName === 'SourceTargetView'"
+          v-show="viewName === 'SourceTargetView'"
         />
         <AnalysisView
           v-if="viewName === 'AnalysisView'"
@@ -67,9 +66,6 @@ function gotoView(viewNameParam) {
           @gotoStep="(n) => gotoView(n)"
         />
 
-        <OutputArea
-          v-show="viewName === 'AnalysisView' || viewName === 'ProcessingView'"
-        />
 
         <n-space vertical v-if="false">
           <n-grid :x-gap="5" cols="1" v-if="false">
@@ -92,7 +88,7 @@ function gotoView(viewNameParam) {
             <n-grid-item> </n-grid-item>
           </n-grid>
         </n-space>
-        <OutputArea />
+        
       </n-config-provider>
     </ProvidePrakContext>
   </n-loading-bar-provider>

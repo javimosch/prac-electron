@@ -16,6 +16,7 @@ declare module '@vue/runtime-core' {
     ExecuteSection: typeof import('./src/components/ExecuteSection.vue')['default']
     ExtensionsSelect: typeof import('./src/components/ExtensionsSelect.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    LoadingBar: typeof import('./src/components/LoadingBar.vue')['default']
     LoggingLevels: typeof import('./src/components/LoggingLevels.vue')['default']
     NormalButton: typeof import('./src/components/NormalButton.vue')['default']
     OutputArea: typeof import('./src/components/OutputArea.vue')['default']

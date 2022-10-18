@@ -30,6 +30,10 @@ export default {
 
       status,
 
+      processingPercent: 0,
+
+      hasAnalysisCache:false,
+
       mainAction: ref("copy"),
       targetDirectoryStructure: ref("flat"),
       reset,
@@ -63,9 +67,20 @@ export default {
   },
   mounted() {
     this.unbindOnEvent = window.electronAPI.onEvent((message) => {
-      console.log('Event',{
+      /*console.log('Event',{
         message
-      })
+      })*/
+
+      if(message.processingPercent!==undefined){
+        this.state.processingPercent=message.processingPercent
+      }
+
+      if(message.hasAnalysisCache!==undefined){
+        this.state.hasAnalysisCache=message.hasAnalysisCache
+      }
+
+      
+
       if (message.processing !== undefined) {
         this.state.isLoading = message.processing;
       }

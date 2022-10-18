@@ -1,5 +1,5 @@
 <template lang="pug">
-.button
+.button(:class="{disabled:disabled, enabled:!disabled}")
     slot
 </template>
 <script setup>
@@ -13,6 +13,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  disabled:{
+    type:Boolean,
+    default:false
+  }
 });
 
 let computedBorderColor = computed({
@@ -30,7 +34,11 @@ let computedBorderColor = computed({
   color: v-bind(color);
   text-transform: uppercase;
 }
-.button:hover {
+.button.disabled{
+    background-color:lightgrey;
+    opacity:0.5;
+}
+.button.enabled:hover {
   opacity: 0.8;
   cursor: pointer;
 }

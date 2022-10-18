@@ -1,6 +1,8 @@
 <script setup>
 import LoggingLevels from "./LoggingLevels.vue";
 import { ref, inject, computed, onMounted, onUnmounted, watch } from "vue";
+import { CleaningServicesOutlined } from '@vicons/material'
+import { Icon } from '@vicons/utils'
 import {
   NSpace,
   NButton,
@@ -22,11 +24,12 @@ const {
   sourceFolders,
   targetDirectory,
   outputResult,
-  isOutputAreaVisible,
   extensions,
   status,
   mainAction,
   targetDirectoryStructure,
+  hasAnalysisCache,
+  processingPercent
 } = inject(PrakStateSymbol);
 
 const stats = ref({
@@ -48,7 +51,7 @@ function formatBytes(bytes, decimals = 2) {
 
 const emit = defineEmits(['gotoStep'])
 
-let loggingLevel = ref("verbose");
+let loggingLevel = ref("minimal");
 
 const loadingBar = useLoadingBar();
 
@@ -81,6 +84,12 @@ onUnmounted(()=>{
   unbindOnEvent();
 })
 
+function cleanAnalysisCache(){
+  window.electronAPI.customAction({
+    name:'cleanAnalysisCache',
+  })
+}
+
 
 
 function normalizeExtensions(extensions) {
@@ -95,7 +104,6 @@ function normalizeExtensions(extensions) {
 }
 
 function openLogsFolder() {
-  isOutputAreaVisible.value = true;
   window.electronAPI.openLogsFolder();
 }
 async function executeAnalysis(isDryRun = false) {
@@ -182,16 +190,28 @@ let canRunMainAction = computed({
         AnalysisExtensionsStats
         
         
-        
-        NormalButton(style="margin-top:15px" borderColor="grey" color="black"
-        :disabled="!canRunAnalysis"
-        @click="canRunAnalysis && executeAnalysis(true)"
-        ) 
-          span(v-show="!isAnalysisComplete") Analysis
-          span(v-show="isAnalysisComplete") Analysis again
-          n-spin(
-            v-show="isAnalysisInProgress"
-            size="large")
+        .two-buttons
+          
+          NormalButton(style="margin-top:15px" borderColor="grey" color="black"
+          :disabled="!canRunAnalysis"
+          @click="canRunAnalysis && executeAnalysis(true)"
+          ) 
+            span(v-show="!isAnalysisComplete") Analysis
+            span(v-show="isAnalysisComplete") Analysis again
+            NSpin(
+              v-show="isAnalysisInProgress"
+              size="large")
+          
+          div(v-show="hasAnalysisCache")
+            n-tooltip( trigger="hover"      )
+              template(#trigger)
+                NormalButton( borderColor="grey" color="black" style="margin-top:15px"
+                @click="cleanAnalysisCache()"
+                )
+                  Icon(size="30" color="black")
+                    CleaningServicesOutlined
+              p Clear analysis cache
+
         
         
         NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('copy')"
@@ -208,7 +228,8 @@ let canRunMainAction = computed({
             LoggingLevels(v-model="loggingLevel")
           div(style="margin-top:10px;")
             TargetStructureSelect
-            
+
+        LoadingBar(:percent="processingPercent")   
         
     OverviewText 
   StepThreeBar  
@@ -258,5 +279,9 @@ label{
   font-family: 'Lato', sans-serif;
   font-weight:300;
   font-size:16px;
+}
+.two-buttons{
+  display:flex;
+  column-gap: 5px;
 }
 </style>

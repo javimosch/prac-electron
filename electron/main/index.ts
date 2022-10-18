@@ -90,7 +90,7 @@ async function createWindow() {
   if (app.isPackaged) {
     win.loadFile(indexHtml);
   } else {
-    console.log('loadURL', url);
+    consoleLog.log('loadURL', url);
     win.loadURL(url);
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
@@ -215,21 +215,24 @@ ipcMain.handle(
   }
 );
 
+ipcMain.handle("customAction", async (event, options = {}) => {
+  consoleLog.log('customAction', {
+    options,
+  })
+
+  if(options.name === 'cleanAnalysisCache'){
+    const currCfg = getCurrCfg(options.name);
+    currCfg.set("analysis",false)
+    sendEvent({
+      hasAnalysisCache:false
+    })
+  }
+})
+
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   const currCfg = getCurrCfg(options.name);
 
-  currCfg.set(
-    "sourceItems",
-    sources.map((sourcePath: string) => {
-      return {
-        fullPath: sourcePath,
-      };
-    })
-  );
-
-  currCfg.set("targetItem", {
-    fullPath: options.targetDirectory,
-  });
+ 
 
   options.include = (options.include || []).map((ext: string) =>
     ext.toLowerCase()
@@ -281,22 +284,28 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   let uniqueFileStats = currCfg.get("stats", []);
   let isAnalysisComplete = currCfg.get("analysis", false);
 
-  if (configId != computedConfigId) {
+ 
+  if (!isAnalysisComplete || configId != computedConfigId || fileStats.length === 0 && uniqueFileStats.length === 0) {
     isAnalysisComplete = false;
-  }
 
-  if (fileStats.length === 0 && uniqueFileStats.length === 0) {
-    isAnalysisComplete = false;
+    sendEvent({
+      hasAnalysisCache:false
+    })
   }
 
   //Force analysis
-  isAnalysisComplete = false;
+  //isAnalysisComplete = false;
 
   let existingFilesInTargetDir: any[] = [];
 
   if (!isAnalysisComplete) {
-    consoleLog.verbose("Running analysis");
     //Analysis start
+
+    let processingPercent = 5
+
+    sendEvent({
+      processingPercent
+    })
 
     let readResultsPartial:any = []
     let readResults: any = await sequential(
@@ -320,9 +329,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               //encoding: 'base64'
             },
             function (obj: any, index: Number, total: Number) {
-              //console.log(`${index} of ${total} ${obj.path}`)
+              //consoleLog.log(`${index} of ${total} ${obj.path}`)
               
-              //console.log("File found", obj);
+              //consoleLog.log("File found", obj);
               
               if (obj.isDirectory) {
                 return;
@@ -338,7 +347,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                   },0)
                 });
               }else{
-               // console.log("File found ", obj,obj.extension.split('.').join('').toLowerCase());
+               // consoleLog.log("File found ", obj,obj.extension.split('.').join('').toLowerCase());
               }
 
               
@@ -362,18 +371,35 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
     consoleLog.info(`${files.length} detected files (Next: MD5 Generation)`);
 
+    processingPercent=10
+    sendEvent({
+      processingPercent
+    })
+
+
+    let processingPercentAnimate = processingPercent
     await sequential(
-      files.map((file: any) => {
+      files.map((file: any, index: number) => {
         return async () => {
           //grab md5
           let md5 = file.md5 || (await md5File(file.fullname));
           file.md5 = md5;
           file.uniqueId = await nanoid(5);
+
+          processingPercent = Math.round(processingPercentAnimate+20*((index+1)/files.length))
+          sendEvent({
+            processingPercent,
+          })
         }; //();
       })
     );
+    processingPercentAnimate=processingPercent
 
-    consoleLog.verbose("Filtering out duplicates");
+    sendEvent({
+      processingPercent
+    })
+
+    
 
     files.forEach((file: any, index: Number) => {
       file.duplicates = files
@@ -396,20 +422,27 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       include: options.include || [],
       readContent: false,
     });
-    console.log({
-      filesInTargetDir,
-    });
+  
     consoleLog.info(
-      `${files.length} files in target dir (Next: MD5 Generation)`
+      `${filesInTargetDir.length} files in target dir`
     );
+
+    processingPercentAnimate = processingPercent
     await sequential(
-      filesInTargetDir.map((file: any) => {
+      filesInTargetDir.map((file: any, index: number) => {
         return async () => {
           let md5 = file.md5 || (await md5File(file.fullname));
           file.md5 = md5;
+
+          processingPercent = Math.round(processingPercentAnimate+20*((index+1)/filesInTargetDir.length))
+          sendEvent({
+            processingPercent,
+          })
+
         }; //();
       })
     );
+    processingPercentAnimate = processingPercent
 
     let uniqueFiles = files.filter(
       (f: any, i: Number) => files.findIndex((ff: any) => ff.md5 == f.md5) == i
@@ -418,12 +451,21 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       (f: any, i: Number) =>
         !uniqueFiles.some((ff: any) => ff.uniqueId == f.uniqueId) //TODO use unique identifier
     );
+
+
+    /*
     duplicatedFiles.forEach((f: any, i: Number) => {
       consoleLog.verbose(`[${i}] ${f.name} / ${f.md5} duplicated (Skip)`);
-    });
+    });*/
+
+
     consoleLog.info(
-      `${uniqueFiles.length} unique files detected (After checking duplicates in source directories)`
+      {
+        uniqueFilesCount: uniqueFiles.length,
+      duplicatedFilesCount: duplicatedFiles.length
+      }
     );
+
     existingFilesInTargetDir = uniqueFiles.filter(
       (f: any) => filesInTargetDir.findIndex((ff: any) => ff.md5 == f.md5) >= 0
     );
@@ -434,15 +476,20 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       let r = !existingFilesInTargetDir.some((ff: any) => ff.md5 == f.md5);
       return r;
     });
+
+    /*
     existingFilesInTargetDir.forEach((f: any, i: Number) => {
       consoleLog.verbose(
         `[${i}] ${f.name} / ${f.md5} found in target directory (Skip) `
       );
-    });
+    });*/
+
     consoleLog.info(
       `${existingFilesInTargetDir.length} files which already exists in target directory will be skip`
     );
 
+
+    const renamedCount = 0
     uniqueFiles.forEach((file: any, index: number) => {
       let hasSomeWithSameName = uniqueFiles.some(
         (f: any, i: number) =>
@@ -454,13 +501,15 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
           "_" +
           file.uniqueId +
           file.extension;
-        consoleLog.verbose(
+        /*consoleLog.verbose(
           `${file.fullname} -> ${file.newName} (${
             options.isDryRun ? "would" : "will"
           } be renamed)`
-        );
+        );*/
       }
     });
+
+    consoleLog.info(`${renamedCount} files will be renamed`)
 
     consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
@@ -468,17 +517,36 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
     fileStats = files;
     uniqueFileStats = uniqueFiles;
+
+
+    currCfg.set(
+      "sourceItems",
+      sources.map((sourcePath: string) => {
+        return {
+          fullPath: sourcePath,
+        };
+      })
+    );
+
+    currCfg.set("targetItem", {
+      fullPath: options.targetDirectory,
+    });
+    isAnalysisComplete = true;
+    currCfg.set("analysis", isAnalysisComplete);
+    currCfg.set("fileStats", fileStats);
+    currCfg.set("uniqueFileStats", uniqueFileStats);
+    currCfg.set("timestamp", moment().toDate().getTime());
+    currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
+    currCfg.set("id", configId)
+
   } else {
-    consoleLog.verbose("Restoring analysis");
+    consoleLog.info("Restoring analysis");
   }
 
   //Analysis complete
-  isAnalysisComplete = true;
-  currCfg.set("analysis", isAnalysisComplete);
-  currCfg.set("fileStats", fileStats);
-  currCfg.set("uniqueFileStats", uniqueFileStats);
-  currCfg.set("timestamp", moment().toDate().getTime());
-  currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
+  sendEvent({
+    hasAnalysisCache:true
+  })
   //=====
 
   let affectedFilesCount = ["move", "copy"].includes(options.mainAction)
@@ -491,8 +559,16 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     }`
   );
 
+  if(options.isDryRun) {
+    sendEvent({
+      processingPercent:100
+    })
+    consoleLog.log('Analysis successful');
+    return
+  }
+
   //If clean, remove skipped files from sources
-  if (["clean"].includes(options.mainAction)) {
+  if (!options.isDryRun && ["clean"].includes(options.mainAction)) {
     Promise.all(
       existingFilesInTargetDir.map((f: any) => {
         return (async () => {
@@ -529,7 +605,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   }
 
   //COPY OR MOVE MAIN ACTION
-  if (["copy", "move"].includes(options.mainAction)) {
+  if (!options.isDryRun && ["copy", "move"].includes(options.mainAction)) {
     setTimeout(() => {
       sequential(
         uniqueFileStats.map((file: any) => {
@@ -616,7 +692,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                   : `(${mainActionLabelPast[options.mainAction]})`
               }`
             );
-            win?.webContents.send("event", {
+            sendEvent( {
               processing: true,
             });
           }; //();
@@ -625,7 +701,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         consoleLog.info(
           `${mainActionLabelVerb[options.mainAction]} process ended`
         );
-        win?.webContents.send("event", {
+        sendEvent( {
           processing: false,
         });
       });
@@ -686,16 +762,21 @@ async function moveFile(
   );
 }
 
-async function rraListWrapper(path: string, options: any, callback: Function) {
+function sendEvent(props:any){
+  win?.webContents.send("event", props);
+}
+
+async function rraListWrapper(path: string, options: any, callback: Function | null = null) {
   callback = callback || (()=>{})
-  let res: any[] = [];
+  let res: any[]  = [];
   await tryCatchAsync(async () => {
-    res = await rra.list.apply(rra, [path, options, callback]);
-    if (res.error) {
+    res = await rra.list.apply(rra, [path, options, callback || undefined]);
+    if (!(res instanceof Array)) {
+      let errorRes: any = res
       handleErrorLogging(
         new Error("Readdir error"),
         {
-          details: res.error,
+          details: errorRes.error,
           path: path,
         },
         "Failed to read directory"
@@ -743,7 +824,7 @@ async function tryCatchAsync(
   try {
     await cb();
   } catch (err: any) {
-    console.error(err);
+    consoleLog.error(err);
     consoleLog.debug("ERROR", {
       err,
     });
@@ -756,17 +837,36 @@ function getHTMLParagraph(text: String, title = "Info") {
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
 }
 
+let lastMessageStamp: number|null = null
 consoleLog.hooks.push((message: any, transport: any) => {
   if (transport === consoleLog.transports.console) {
     if (shouldSendConsoleEvent(message.level)) {
-      win?.webContents.send("event", {
+      sendEvent( {
         html: getHTMLParagraph(message.data, message.level),
       });
     }
-  }
 
+    let prefix=""
+  if(lastMessageStamp){
+    prefix = `${msToTime(Date.now()-lastMessageStamp)}`
+  }
+  lastMessageStamp=Date.now()
+  message.data.unshift(prefix)
+  }
+  
   return message;
 });
+
+function msToTime(s:any) {
+  var ms = s % 1000;
+  s = (s - ms) / 1000;
+  var secs = s % 60;
+  s = (s - secs) / 60;
+  var mins = s % 60;
+  var hrs = (s - mins) / 60;
+
+  return hrs + ':' + mins + ':' + secs + '.' + ms;
+}
 
 function shouldSendConsoleEvent(level: string) {
   if (["error"].includes(level) && logLevel === "error") {

@@ -26,12 +26,12 @@ let songs = [
     label: "Normal",
     value: "normal",
     tooltip: "error, warn, info",
-  },
+  }/*,
   {
     label: "Verbose",
     value: "verbose",
     tooltip: "error, warn, info, verbose",
-  },
+  },*/
 ];
 
 const props = defineProps({

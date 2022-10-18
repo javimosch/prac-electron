@@ -5,11 +5,22 @@
         SourceFolderList
         TargetFolderList
         ExtensionsSelect
-        BigButton(@click="$emit('clickNext')") Next
+        BigButton(:disabled="!canContinue" @click="canContinue &&$emit('clickNext')") Next
     StepTwoBar
     StepThreeBar
 </template>
 <script setup>
+import {computed, inject} from 'vue'
+import { PrakStateSymbol } from "@/constants.js";
+
+const {
+    extensions
+} = inject(PrakStateSymbol);
+
+const canContinue = computed({
+    get: ()=> extensions.value.length > 0
+})
+
 </script>
 <style scoped>
     .steps{
