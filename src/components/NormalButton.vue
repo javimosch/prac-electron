@@ -37,6 +37,10 @@ let computedBorderColor = computed({
   justify-content: center;
   align-items: center;
   column-gap: 10px;
+  min-width:150px;
+}
+.sm{
+  min-width: 50px;
 }
 .button.disabled{
     background-color:lightgrey;

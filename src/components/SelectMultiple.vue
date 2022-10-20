@@ -1,12 +1,11 @@
 <template lang="pug">
 .title {{props.title}}
 .options
-  .option(v-for="option in options" @click="toggleOption(option)" :class="{selected:selected.some(v=>v.value==option.value)}")
+  .option(v-for="option in options" @click="toggleOption(option)" :class="{selected:props.modelValue.some(v=>v==option.value)}")
     n-tooltip( trigger="hover")
       template(#trigger)
         .text {{option.text}}
-      p {{option.tooltip}}
-
+      p {{option.tooltip}} 
 </template>
 <script setup>
 import { NTooltip } from "naive-ui";
@@ -23,19 +22,29 @@ const props = defineProps({
       return [];
     },
   },
+  modelValue:{
+    type: Array,
+    default:()=>([])
+  }
 });
 const selected = ref([]);
 
 function toggleOption(option) {
-  if (selected.value.some((item) => item.value == option.value)) {
-    selected.value.splice(
-      selected.value.findIndex((item) => item.value == option.value),
+  let selected = props.modelValue.map(v=>v)
+
+  if(selected.includes('all')&&option.value!=='all'){
+    selected.length=0
+  }
+
+  if (selected.some((item) => item == option.value)) {
+    selected.splice(
+      selected.findIndex((item) => item == option.value),
       1
     );
   }else{
-    selected.value.push(option)
+    selected.push(option.value)
   }
-  emit('update:modelValue', selected.value);
+  emit('update:modelValue', selected);
 }
 </script>
 <style scoped>

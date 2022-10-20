@@ -97,20 +97,20 @@ function cleanAnalysisCache(){
 
 
 function normalizeExtensions(extensions) {
-  if (extensions.value.some((v) => v.value === "all")) {
+  if (extensions.value.some((v) => v === "all")) {
     return [];
   }
 
   return extensions.value
-    .map((v) => v.value)
+    .map((v) => v)
     .filter((v) => !!v)
     .map((v) => `.` + v.split(".").join("").trim());
 }
 
 
 async function executeAnalysis(isDryRun = false) {
-  stats.sourceStats = []
-  stats.targetStats = []
+  stats.value.sourceStats = []
+  stats.value.targetStats = []
   loadingBar.start();
   isLoading.value = true;
   outputResult.value = "";
@@ -169,7 +169,8 @@ let canRunMainAction = computed({
       isLoading.value == false &&
       sourceFolders.value.length > 0 &&
       targetDirectory.value.length > 0 &&
-      extensions.value.length > 0
+      extensions.value.length > 0 && 
+      stats.value.sourceStats.length>0
     );
   },
 });
@@ -200,7 +201,7 @@ let canRunMainAction = computed({
           div(v-show="hasAnalysisCache")
             n-tooltip( trigger="hover"      )
               template(#trigger)
-                NormalButton( borderColor="grey" color="black" style="margin-top:15px"
+                NormalButton.sm( borderColor="grey" color="black" style="margin-top:15px"
                 @click="cleanAnalysisCache()"
                 )
                   Icon(size="30" color="black")
@@ -217,8 +218,8 @@ let canRunMainAction = computed({
           
           n-tooltip( trigger="hover"      )
             template(#trigger)
-              NormalButton( borderColor="grey" color="black" style="margin-top:15px"
-              @click="()=>isCopySettingsAreaVisible=true"
+              NormalButton.sm( borderColor="grey" color="black" style="margin-top:15px"
+              @click="()=>canRunMainAction ? isCopySettingsAreaVisible=true : null" :disabled="!canRunMainAction"
               )
                 Icon(size="30" color="black")
                   SettingsTwotone

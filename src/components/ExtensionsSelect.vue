@@ -1,37 +1,51 @@
 <template lang="pug">
-SelectMultiple(title="FIND DUPLICATES BY EXTENSIONS" :options="options" v-model="selected")
+SelectMultiple(title="FIND DUPLICATES BY EXTENSIONS" :options="options" v-model="extensions")
 </template>
 <script setup>
-import { ref, watchEffect, inject, onMounted } from "vue";
+import { ref, inject, watch } from "vue";
 
 import { PrakStateSymbol } from "@/constants.js";
 const { extensions } = inject(PrakStateSymbol);
 
 const props = defineProps({});
 const options = ref(
-  ["jpg", "pdf", "png", "git", "tiff", "ALL"].map((ext) => ({
+  ["jpg", "pdf", "png", "git", "tiff", "all"].map((ext) => ({
     text: ext.toUpperCase(),
     tooltip: `${ext.toUpperCase()} files`,
     value: ext.toLowerCase(),
   }))
 );
-const selected = ref([options.value[0]]);
 
-watchEffect(() => {
-  
-  if(selected.value.find(v=>v.value==='all')&&selected.value.length>1){
-    selected.value = [
-      options.value.find(v=>v.value==='all')
-    ]
+watch(
+  extensions,
+  () => {
+    if (
+      extensions.value.find((v) => v === "all") &&
+      extensions.value.length > 1
+    ) {
+      extensions.value = ["all"];
+    }
+
+    let val = extensions.value.map((ext) =>
+      ext.charAt(0) === "." ? ext.substring(1) : ext
+    );
+    val = val.filter(
+      (ext, i) => extensions.value.findIndex((e) => e == ext) == i
+    );
+
+    window.electronAPI.customAction({
+      name: "setConfigValues",
+      values: [
+        {
+          name: "extensions",
+          value: JSON.parse(JSON.stringify(val)),
+        },
+      ],
+    });
+  },
+  {
+    deep: true,
   }
-
-  extensions.value = [...selected.value];
-  
-});
-
-onMounted(()=>{
-  extensions.value = [...selected.value];
-  console.log('extensions.value')
-})
+);
 </script>
 <style scoped></style>

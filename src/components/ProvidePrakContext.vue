@@ -1,7 +1,7 @@
 <script>
 // src/components/ProvidePrakContext.js
 import { provide, reactive, readonly, toRefs, ref } from "vue";
-import { PrakStateSymbol } from "../constants.js";
+import { PrakStateSymbol } from "@/constants.js";
 import moment from "moment";
 export default {
   setup() {
@@ -69,7 +69,13 @@ export default {
     });
     if (conf.sourceItems.length > 0) {
       this.state.sourceFolders = [...conf.sourceItems.map((s) => s.fullPath)];
+      
+    }
+    if(conf.targetItem){
       this.state.targetDirectory = [conf.targetItem.fullPath || ""];
+    }
+    if(conf.extensions&&conf.extensions.length>0){
+      this.state.extensions = conf.extensions
     }
   },
   render() {
@@ -123,7 +129,7 @@ export default {
     });
   },
   beforeUnmount() {
-    unbindOnEvent();
+    this.unbindOnEvent();
   },
 };
 </script>

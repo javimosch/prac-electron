@@ -7,7 +7,7 @@
     span Target folder: {{targetDirectory.map(str=>getFolderName(str)).join(',')}}
     .target-structure Target structure: {{targetDirectoryStructure}}
     .main-action Current action: {{mainAction}}
-    .extensions Extensions: {{extensions.map(ext=>ext.text).join(', ')}}
+    .extensions Extensions: {{extensions.map(ext=>ext.toUpperCase()).join(', ')}}
     .status Status: {{formatStatus(status)}}
     .processing-percent(v-show="processingPercent!==0&&processingPercent!==100") Processing {{processingPercent}}%
     .processing-message(v-show="processingMessage" v-text="processingMessage")

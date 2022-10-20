@@ -17,6 +17,7 @@ declare module '@vue/runtime-core' {
     CopySettingsDrawer: typeof import('./src/components/CopySettingsDrawer.vue')['default']
     ExecuteSection: typeof import('./src/components/ExecuteSection.vue')['default']
     ExtensionsSelect: typeof import('./src/components/ExtensionsSelect.vue')['default']
+    FolderListItem: typeof import('./src/components/FolderListItem.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     LoadingBar: typeof import('./src/components/LoadingBar.vue')['default']
     LoggingLevels: typeof import('./src/components/LoggingLevels.vue')['default']

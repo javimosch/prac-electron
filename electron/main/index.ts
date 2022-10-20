@@ -34,7 +34,7 @@ const resultStats: any = {
   filesCount:0,
   dupesCount:0
 }
-const scope = {
+const scope:any = {
   analysisStats,
   resultStats
 };
@@ -229,6 +229,7 @@ ipcMain.handle(
       targetItem: currCfg.get("targetItem", {
         fullPath: "",
       }),
+      extensions: currCfg.get("extensions")
     };
   }
 );
@@ -244,6 +245,16 @@ ipcMain.handle("customAction", async (event, options = {}) => {
     sendEvent({
       hasAnalysisCache: false,
     });
+  }
+
+  if(options.name === 'setConfigValues'){
+    const currCfg = getCurrCfg(options.configName);
+    options.values.forEach((valueItem:any) => {
+      console.log('setConfigValues', {
+        valueItem: valueItem
+      })
+      currCfg.set(valueItem.name, valueItem.value)
+    })
   }
 });
 
@@ -293,16 +304,21 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     ext.toLowerCase()
   );
 
-  options.include.forEach((ext: string) => {
-    options.include.push(ext.toUpperCase());
-  });
-
   if (options.include.includes(".jpg") && !options.include.includes(".jpeg")) {
     options.include.push(".jpeg");
   }
   if (options.include.includes(".jpeg") && !options.include.includes(".jpg")) {
     options.include.push(".jpg");
   }
+
+  options.include.forEach((ext: string) => {
+    options.include.push(ext.toUpperCase());
+  });
+
+  let extensions = options.include
+  .map(ext=>(ext.charAt(0)==='.'?ext.substring(1):ext).toLowerCase())
+  extensions = extensions.filter((ext, i)=>extensions.findIndex(e=>e==ext)==i)
+  currCfg.set('extensions', extensions)
 
   consoleLog.debug(
     "analyzeSources",
@@ -316,7 +332,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     )
   );
 
-  consoleLog.info("Extensions", options.include);
+  consoleLog.info("Include", options.include);
+  consoleLog.info("Extensions", extensions);
 
   logLevel = options.loggingLevel || logLevel;
 
@@ -329,6 +346,10 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     consoleLog.error("Missing target directory");
     return;
   }
+
+  console.log('sources',{
+    sources
+  })
 
   let computedConfigId = JSON.stringify({
     sources,
@@ -348,7 +369,16 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     configId != computedConfigId ||
     (sourceFiles.length === 0 && uniqueFiles.length === 0);
 
+  console.log('hasInvalidCache',{
+    '!isAnalysisComplete':!isAnalysisComplete,
+    "configId != computedConfigId":configId != computedConfigId,
+    "(sourceFiles.length === 0 && uniqueFiles.length === 0)": (sourceFiles.length === 0 && uniqueFiles.length === 0),
+    configId,
+    computedConfigId
+  })
+
   if (hasInvalidCache) {
+    configId = computedConfigId
     isAnalysisComplete = false;
 
     sendEvent({
@@ -616,6 +646,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     currCfg.set("timestamp", moment().toDate().getTime());
     currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
     currCfg.set("id", configId);
+    consoleLog.log("Analysis successful", configId);
   } else {
     consoleLog.info("Restoring analysis");
     sendEventStatsUsingCacheAnalysis(sourceFiles, targetFiles, duplicatedFiles);
@@ -642,7 +673,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   );
 
   if (options.isDryRun) {
-    consoleLog.log("Analysis successful");
+    consoleLog.log("Finish after analysis");
   } else {
     processingPercent = 0;
 
