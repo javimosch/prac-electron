@@ -9,11 +9,13 @@
     .main-action Current action: {{mainAction}}
     .extensions Extensions: {{extensions.map(ext=>ext.text).join(', ')}}
     .status Status: {{formatStatus(status)}}
+    .processing-percent(v-show="processingPercent!==0&&processingPercent!==100") Processing {{processingPercent}}%
+    .processing-message(v-show="processingMessage" v-text="processingMessage")
 </template>
 <script setup>
 import { PrakStateSymbol } from "../constants.js";
 import { inject,computed } from "vue";
-const { sourceFolders, targetDirectory, extensions, status,mainAction, targetDirectoryStructure } = inject(PrakStateSymbol);
+const { sourceFolders, targetDirectory, extensions, status,mainAction, targetDirectoryStructure, processingPercent, processingMessage} = inject(PrakStateSymbol);
 
 function formatStatus(status){
   switch(status){

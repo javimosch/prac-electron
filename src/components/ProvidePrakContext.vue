@@ -13,6 +13,8 @@ export default {
       state.targetDirectoryStructure = "flat";
       state.outputResult = "";
       state.isOutputAreaVisible = false;
+      state.processingMessage=""
+      state.resultStats = {}
     });
 
     const state = reactive({
@@ -26,11 +28,21 @@ export default {
 
       isOutputAreaVisible: ref(false),
 
+      isSettingsAreaVisible: false,
+
+      isCopySettingsAreaVisible: ref(false),
+
+      loggingLevel: 'minimal',
+
       extensions: ref([]),
 
       status,
 
       processingPercent: 0,
+
+      processingMessage: '',
+
+      resultStats: ref({}),
 
       hasAnalysisCache:false,
 
@@ -66,10 +78,21 @@ export default {
     return this.$slots.default();
   },
   mounted() {
+
+
+
     this.unbindOnEvent = window.electronAPI.onEvent((message) => {
       /*console.log('Event',{
         message
       })*/
+
+      if(message.resultStats){
+        Object.keys(message.resultStats).forEach(key=>{
+          if(message.resultStats[key]!==undefined){
+            this.state.resultStats[key]=message.resultStats[key]
+          }
+        })
+      }
 
       if(message.processingPercent!==undefined){
         this.state.processingPercent=message.processingPercent
@@ -77,6 +100,10 @@ export default {
 
       if(message.hasAnalysisCache!==undefined){
         this.state.hasAnalysisCache=message.hasAnalysisCache
+      }
+
+      if(message.processingMessage!==undefined){
+        this.state.processingMessage=message.processingMessage
       }
 
       

@@ -6,7 +6,7 @@
 <style scoped>
 .step-bar {
   width: 60px;
-  height: calc(100vh);
+  
   display: flex;
   justify-content: center;
   align-items: flex-end;

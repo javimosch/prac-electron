@@ -79,6 +79,7 @@
         "checksum": "^1.0.0",
         "electron-cfg": "^1.2.7",
         "electron-log": "^4.4.8",
+        "electron-store": "^8.1.0",
         "empty-dir": "^3.0.0",
         "md5-file": "^5.0.0",
         "mime-types": "^2.1.35",

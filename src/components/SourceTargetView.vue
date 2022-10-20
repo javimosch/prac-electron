@@ -37,5 +37,6 @@ const canContinue = computed({
         justify-content: start;
         row-gap:20px;
         width: calc(100vw - 200px);
+        min-height: calc(100vh - 40px);
     }
 </style>

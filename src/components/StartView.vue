@@ -3,8 +3,8 @@
     .center
         BrandCenter
         .btn-group
-            BigButton(@click="$emit('click')") Start from scratch
-            BigButton(@click="$emit('click')") Half way done
+            BigButton(@click="$emit('click')") Start
+            //BigButton(@click="$emit('click')") Half way done
 </template>
 
 <script setup></script>

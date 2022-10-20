@@ -1,7 +1,7 @@
 <script setup>
 import LoggingLevels from "./LoggingLevels.vue";
 import { ref, inject, computed, onMounted, onUnmounted, watch } from "vue";
-import { CleaningServicesOutlined } from '@vicons/material'
+import { CleaningServicesOutlined,SettingsTwotone } from '@vicons/material'
 import { Icon } from '@vicons/utils'
 import {
   NSpace,
@@ -17,9 +17,10 @@ import {
   NSpin,
   NAlert,
 } from "naive-ui";
-import { PrakStateSymbol } from "../constants.js";
 import { useLoadingBar } from "naive-ui";
 import moment from "moment";
+
+import { PrakStateSymbol } from "@/constants.js";
 const {
   sourceFolders,
   targetDirectory,
@@ -29,12 +30,14 @@ const {
   mainAction,
   targetDirectoryStructure,
   hasAnalysisCache,
-  processingPercent
+  processingPercent,
+  loggingLevel,
+  isCopySettingsAreaVisible
 } = inject(PrakStateSymbol);
 
 const stats = ref({
-  sourceFileCount:0,
-  sourceFilesSizeTotal:0
+  targetStats:[],
+  sourceStats:[]
 })
 
 function formatBytes(bytes, decimals = 2) {
@@ -51,7 +54,6 @@ function formatBytes(bytes, decimals = 2) {
 
 const emit = defineEmits(['gotoStep'])
 
-let loggingLevel = ref("minimal");
 
 const loadingBar = useLoadingBar();
 
@@ -69,9 +71,7 @@ watch(
 let unbindOnEvent
 onMounted(()=>{
   unbindOnEvent = window.electronAPI.onAnalysisStat((message) => {
-      console.log('onAnalysisStat',{
-        message
-      })
+    
       Object.keys(stats.value).forEach(key=>{
         if(message[key]!==undefined){
           stats.value[key]=message[key]
@@ -79,6 +79,10 @@ onMounted(()=>{
       })
      
     });
+
+    if(canRunAnalysis){
+      executeAnalysis(true)
+    }
 })
 onUnmounted(()=>{
   unbindOnEvent();
@@ -103,10 +107,10 @@ function normalizeExtensions(extensions) {
     .map((v) => `.` + v.split(".").join("").trim());
 }
 
-function openLogsFolder() {
-  window.electronAPI.openLogsFolder();
-}
+
 async function executeAnalysis(isDryRun = false) {
+  stats.sourceStats = []
+  stats.targetStats = []
   loadingBar.start();
   isLoading.value = true;
   outputResult.value = "";
@@ -131,7 +135,7 @@ async function executeAnalysis(isDryRun = false) {
 
 async function executeMainAction(actionName){
   mainAction.value = actionName;
-  executeAnalysis(false)
+  await executeAnalysis(false)
   emit('gotoStep','ProcessingView')
 }
 
@@ -181,27 +185,18 @@ let canRunMainAction = computed({
     .h-layout
       .left-layout
         label Source
-        AnalysisStat(title="Files found" :value="stats.sourceFileCount")
-        AnalysisStat(title="Size" :value="formatBytes(stats.sourceFilesSizeTotal)")
-        label Target
-        AnalysisStat(title="Files found" :value="43")
-        AnalysisStat(title="Size" :value="1.5")
-      .right-layout
-        AnalysisExtensionsStats
-        
-        
+        AnalysisExtensionsStats(:stats="stats.sourceStats")
+
         .two-buttons
-          
           NormalButton(style="margin-top:15px" borderColor="grey" color="black"
-          :disabled="!canRunAnalysis"
-          @click="canRunAnalysis && executeAnalysis(true)"
-          ) 
-            span(v-show="!isAnalysisComplete") Analysis
-            span(v-show="isAnalysisComplete") Analysis again
-            NSpin(
-              v-show="isAnalysisInProgress"
-              size="large")
-          
+            :disabled="!canRunAnalysis"
+            @click="canRunAnalysis && executeAnalysis(true)"
+            ) 
+              span(v-show="!isAnalysisComplete") ANALYZE
+              span(v-show="isAnalysisComplete") RE-ANALYZE
+              NSpin(
+                v-show="isAnalysisInProgress"
+                size="large")
           div(v-show="hasAnalysisCache")
             n-tooltip( trigger="hover"      )
               template(#trigger)
@@ -211,26 +206,47 @@ let canRunMainAction = computed({
                   Icon(size="30" color="black")
                     CleaningServicesOutlined
               p Clear analysis cache
+        
+        .two-buttons
+          n-tooltip(trigger="hover")
+            template(#trigger)
+              NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('copy')"
+              :disabled="!canRunMainAction"
+              ) COPY
+            p Sync/Copy to target (Deduping and skipping existing files)
+          
+          n-tooltip( trigger="hover"      )
+            template(#trigger)
+              NormalButton( borderColor="grey" color="black" style="margin-top:15px"
+              @click="()=>isCopySettingsAreaVisible=true"
+              )
+                Icon(size="30" color="black")
+                  SettingsTwotone
+            p Copy settings area
 
-        
-        
-        NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('copy')"
-        :disabled="!canRunMainAction"
-        ) COPY TO DESTINATION
-        
-        NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN SOURCE
 
-        NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="openLogsFolder") Open Logs folder
+        n-tooltip( trigger="hover"      )
+          template(#trigger)
+            NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
+          p Free space removing source files present in Target directory.
         
-        .extra-options
-          div(style="margin-top:10px;")
-            label Logging Level
-            LoggingLevels(v-model="loggingLevel")
-          div(style="margin-top:10px;")
-            TargetStructureSelect
 
-        LoadingBar(:percent="processingPercent")   
+        //div
+          label Source
+          AnalysisStat(title="Files found" :value="stats.sourceFileCount")
+          AnalysisStat(title="Size" :value="formatBytes(stats.sourceFilesSizeTotal)")
+          label Target
+          AnalysisStat(title="Files found" :value="43")
+          AnalysisStat(title="Size" :value="1.5")
+      .right-layout
+        label Target  
+        AnalysisExtensionsStats(:stats="stats.targetStats")
+        n-tooltip( trigger="hover"      )
+          template(#trigger)
+            NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="()=>{}" :disabled="true") DEDUPE
+          p Free space deduping in target directory
         
+    LoadingBar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
     OverviewText 
   StepThreeBar  
    
@@ -263,13 +279,16 @@ let canRunMainAction = computed({
   column-gap: 50px;
 }
 .left-layout {
-  flex-basis: 40%;
+  flex-basis: 50%;
   display: flex;
   flex-direction: column;
-  row-gap: 25px;
+  row-gap: 5px;
 }
 .right-layout {
-  flex-basis: 70%;
+  flex-basis: 50%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
 }
 .extra-options {
   display: flex;

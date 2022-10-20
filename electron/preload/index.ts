@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     <Promise<any>>ipcRenderer.invoke("selectMultipleFolders"),
   analyzeSources: (sources: String[] = [], options: any) =>
     <Promise<any>>ipcRenderer.invoke("analyzeSources", sources, options),
-    customAction: (sources: String[] = [], options: any) =>
+    customAction: (options: any) =>
     <Promise<any>>ipcRenderer.invoke("customAction", options),
   onEvent: (callback: Function) => {
     let listener = (event: any, message: any) => {

@@ -21,7 +21,8 @@ import { lightTheme } from "naive-ui";
 // locale & dateLocale
 import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
 
-import { ref } from "vue";
+import { ref, inject} from "vue";
+
 
 const options = ref([
   {
@@ -31,7 +32,7 @@ const options = ref([
 ]);
 const configName = ref("default");
 
-let viewName = ref("AnalysisView");
+let viewName = ref("StartView");
 
 function gotoView(viewNameParam) {
   viewName.value = viewNameParam;
@@ -65,6 +66,9 @@ function gotoView(viewNameParam) {
           v-if="viewName === 'ProcessingView'"
           @gotoStep="(n) => gotoView(n)"
         />
+
+        <SettingsDrawer/>
+        <CopySettingsDrawer/>
 
 
         <n-space vertical v-if="false">
