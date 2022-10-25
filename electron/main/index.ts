@@ -264,7 +264,7 @@ ipcMain.handle("customAction", async (event, options = {}) => {
  * @returns
  */
 function getStatItem(obj: any, attr = "sourceStats") {
-  let extension = (obj.extension || "").split(".").join(""); //Fallback to grabing the ext as it is
+  let extension = (obj.extension || "").split(".").join("") || 'unknown' //Fallback to grabing the ext as it is
   if (!extension) {
     console.log({
       obj,
