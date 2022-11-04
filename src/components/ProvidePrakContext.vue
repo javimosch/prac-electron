@@ -9,7 +9,7 @@ export default {
 
     const reset = ref(function () {
       status.value = "analysis_required";
-      state.mainAction = "copy";
+      state.mainAction = "dedupe";
       state.targetDirectoryStructure = "flat";
       state.outputResult = "";
       state.isOutputAreaVisible = false;
@@ -45,6 +45,8 @@ export default {
       resultStats: ref({}),
 
       hasAnalysisCache:false,
+
+      isDryRun:ref(false),
 
       mainAction: ref("copy"),
       targetDirectoryStructure: ref("flat"),

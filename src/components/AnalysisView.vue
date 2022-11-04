@@ -28,6 +28,7 @@ const {
   extensions,
   status,
   mainAction,
+  isDryRun,
   targetDirectoryStructure,
   hasAnalysisCache,
   processingPercent,
@@ -108,25 +109,26 @@ function normalizeExtensions(extensions) {
 }
 
 
-async function executeAnalysis(isDryRun = false) {
+async function executeAnalysis(isAnalysis = false) {
   stats.value.sourceStats = []
   stats.value.targetStats = []
   loadingBar.start();
   isLoading.value = true;
   outputResult.value = "";
-  if (isDryRun) {
+  if (isAnalysis) {
     status.value = "analysis_in_progress";
   }
   await window.electronAPI.analyzeSources([...sourceFolders.value], {
-    isDryRun: isDryRun === true,
+    isDryRun: isDryRun.value === true,
     loggingLevel: loggingLevel.value,
     mainAction: mainAction.value,
+    isAnalysis,
     targetDirectoryStructure: targetDirectoryStructure.value,
     targetDirectory: targetDirectory.value[0],
     include: normalizeExtensions(extensions),
   });
   isLoading.value = false;
-  if (isDryRun) {
+  if (isAnalysis) {
     status.value = "analysis_complete";
   }
   loadingBar.finish();
@@ -165,12 +167,12 @@ let canRunAnalysis = computed({
 let canRunMainAction = computed({
   get: () => {
     return (
-      isAnalysisComplete.value===true &&
-      isLoading.value == false &&
-      sourceFolders.value.length > 0 &&
-      targetDirectory.value.length > 0 &&
-      extensions.value.length > 0 && 
-      stats.value.sourceStats.length>0
+      isAnalysisComplete.value===true && //Has comple analysis
+      isLoading.value == false && //Is not loading
+      sourceFolders.value.length > 0 && //Has selected source folders
+      (targetDirectory.value.length > 0 || mainAction.value==='dedupe') &&
+      extensions.value.length > 0 &&  //Has extensions
+      stats.value.sourceStats.length>0 //There are files in sourceFolders
     );
   },
 });
@@ -189,15 +191,18 @@ let canRunMainAction = computed({
         AnalysisExtensionsStats(:stats="stats.sourceStats")
 
         .two-buttons
-          NormalButton(style="margin-top:15px" borderColor="grey" color="black"
-            :disabled="!canRunAnalysis"
-            @click="canRunAnalysis && executeAnalysis(true)"
-            ) 
-              span(v-show="!isAnalysisComplete") ANALYZE
-              span(v-show="isAnalysisComplete") RE-ANALYZE
-              NSpin(
-                v-show="isAnalysisInProgress"
-                size="large")
+          n-tooltip( trigger="hover"      )
+            template(#trigger)
+              NormalButton(style="margin-top:15px" borderColor="grey" color="black"
+                :disabled="!canRunAnalysis"
+                @click="canRunAnalysis && executeAnalysis(true)"
+                ) 
+                  span(v-show="!isAnalysisComplete") ANALYZE
+                  span(v-show="isAnalysisComplete") RE-ANALYZE
+                  NSpin(
+                    v-show="isAnalysisInProgress"
+                    size="large")
+            p Run analysis and collect files information.
           div(v-show="hasAnalysisCache")
             n-tooltip( trigger="hover"      )
               template(#trigger)
@@ -208,7 +213,7 @@ let canRunMainAction = computed({
                     CleaningServicesOutlined
               p Clear analysis cache
         
-        .two-buttons
+        .two-buttons(v-if="mainAction==='copy'")
           n-tooltip(trigger="hover")
             template(#trigger)
               NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('copy')"
@@ -226,12 +231,17 @@ let canRunMainAction = computed({
             p Copy settings area
 
 
-        n-tooltip( trigger="hover"      )
+        n-tooltip(v-if="mainAction==='clean'" trigger="hover"      )
           template(#trigger)
             NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
-          p Free space removing source files present in Target directory.
-        
+          p Free space removing source files present in Target directory and duplicates.
 
+        n-tooltip(v-if="mainAction==='dedupe'" trigger="hover"      )
+          template(#trigger)
+            NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") DEDUPE
+          p Remove duplicates in the selected directories
+        
+ 
         //div
           label Source
           AnalysisStat(title="Files found" :value="stats.sourceFileCount")
@@ -239,10 +249,10 @@ let canRunMainAction = computed({
           label Target
           AnalysisStat(title="Files found" :value="43")
           AnalysisStat(title="Size" :value="1.5")
-      .right-layout
+      .right-layout(v-if="mainAction!=='dedupe'")
         label Target  
         AnalysisExtensionsStats(:stats="stats.targetStats")
-        n-tooltip( trigger="hover"      )
+        //n-tooltip( trigger="hover"      )
           template(#trigger)
             NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="()=>{}" :disabled="true") DEDUPE
           p Free space deduping in target directory

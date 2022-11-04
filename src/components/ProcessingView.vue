@@ -4,12 +4,25 @@
     StepOneBar(@click="$emit('gotoStep','SourceTargetView')")
     StepTwoBar(@click="$emit('gotoStep','AnalysisView')")
     .main
-        .center
-            ResultStat(title="Processed files" :value="filesCount")
-            ResultStat(
+        .center(v-show="isDedupe||isClean")
+            ResultStat(title="Original count" :value="originalCount")
+            ResultStat(title="Original size" :value="originalSize")
+            ResultStat(title="Final count" :value="finalCount")
+            ResultStat(title="Final size" :value="finalSize")
+        .center(v-show="isCopy")
+            ResultStat(title="Copy count" :value="copyCount")
+            ResultStat(title="Copy size" :value="copySize")
+            ResultStat(title="Dedupe count" :value="dedupeCount")
+            ResultStat(title="Dedupe size" :value="dedupeSize")
+            ResultStat(title="Original target count" :value="originalCount")
+            ResultStat(title="Original target size" :value="originalSize")
+            ResultStat(title="Final target count" :value="finalCount")
+            ResultStat(title="Final target size" :value="finalSize")
+            
+            //ResultStat(
               v-show="dupesCount"
               title="Duplicates" :value="dupesCount")
-            ResultStat(title="Freed space" :value="freedSizeFormatted")
+            //ResultStat(title="Freed space" :value="freedSizeFormatted")
         BigButton(@click="finish") Go Back
     </template>
 <script setup>
@@ -24,16 +37,42 @@ function finish(){
   emit('gotoStep','AnalysisView')
 }
 
-let freedSizeFormatted = computed({
-  get: () => formatBytes(state.resultStats.value.freedSize||0)
+let isDedupe = computed({
+  get: () => state.mainAction.value==='dedupe'
+});
+let isClean = computed({
+  get: () => state.mainAction.value==='clean'
+});
+let isCopy = computed({
+  get: () => state.mainAction.value==='copy'
 });
 
-let filesCount = computed({
-  get: () => state.resultStats.value.filesCount||0
+let originalCount = computed({
+  get: () => state.resultStats.value.originalCount||0
+});
+let originalSize = computed({
+  get: () => formatBytes(state.resultStats.value.originalSize||0)
 });
 
-let dupesCount = computed({
-  get: () => state.resultStats.value.dupesCount||0
+let finalCount = computed({
+  get: () => state.resultStats.value.finalCount||0
+});
+let finalSize = computed({
+  get: () => formatBytes(state.resultStats.value.finalSize||0)
+});
+
+let dedupeCount = computed({
+  get: () => state.resultStats.value.dedupeCount||0
+});
+let dedupeSize = computed({
+  get: () => formatBytes(state.resultStats.value.dedupeSize||0)
+});
+
+let copyCount = computed({
+  get: () => state.resultStats.value.copyCount||0
+});
+let copySize = computed({
+  get: () => formatBytes(state.resultStats.value.copySize||0)
 });
 
 function formatBytes(bytes, decimals = 2) {

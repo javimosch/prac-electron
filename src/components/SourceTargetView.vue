@@ -3,9 +3,11 @@
     StepZeroBar
     .main
         SourceFolderList
-        TargetFolderList
+        TargetFolderList(v-if="mainAction!=='dedupe'")
         ExtensionsSelect
-        BigButton(:disabled="!canContinue" @click="canContinue &&$emit('clickNext')") Next
+        .buttons
+            BigButton(@click="$emit('gotoStep','StartView')") Back
+            BigButton(:disabled="!canContinue" @click="canContinue &&$emit('clickNext')") Next
     StepTwoBar
     StepThreeBar
 </template>
@@ -14,7 +16,8 @@ import {computed, inject} from 'vue'
 import { PrakStateSymbol } from "@/constants.js";
 
 const {
-    extensions
+    extensions,
+    mainAction
 } = inject(PrakStateSymbol);
 
 const canContinue = computed({
@@ -26,7 +29,11 @@ const canContinue = computed({
     .steps{
         display:flex;
         justify-content: flex-start;
-        
+    }
+    .buttons{
+        display:flex;
+        justify-content: flex-start;
+        column-gap: 10px;
     }
 
     .main{

@@ -30,13 +30,24 @@ const analysisStats: any = {
   targetStats: [],
 };
 const resultStats: any = {
-  freedSize:0,
-  filesCount:0,
-  dupesCount:0
-}
-const scope:any = {
+  freedSize: 0,
+  filesCount: 0,
+  dupesCount: 0,
+
+  originalCount: 0,
+  originalSize: 0,
+  finalCount: 0,
+  finalSize: 0,
+  removedFilesCount: 0,
+
+  copyCount: 0,
+  copySize: 0,
+  dedupeCount: 0,
+  dedupeSize: 0,
+};
+const scope: any = {
   analysisStats,
-  resultStats
+  resultStats,
 };
 
 let logLevel = "normal";
@@ -207,10 +218,10 @@ ipcMain.handle("selectSingleFolder", async () => {
 
 function getCurrCfg(configurationName: string = "default"): any {
   if (!scope.currCfg) {
-    const Store = require('electron-store');
+    const Store = require("electron-store");
 
     scope.currCfg = new Store({
-      configurationName: configurationName.split('.')[0]
+      configurationName: configurationName.split(".")[0],
     });
   }
   return scope.currCfg;
@@ -229,7 +240,7 @@ ipcMain.handle(
       targetItem: currCfg.get("targetItem", {
         fullPath: "",
       }),
-      extensions: currCfg.get("extensions")
+      extensions: currCfg.get("extensions"),
     };
   }
 );
@@ -247,14 +258,14 @@ ipcMain.handle("customAction", async (event, options = {}) => {
     });
   }
 
-  if(options.name === 'setConfigValues'){
+  if (options.name === "setConfigValues") {
     const currCfg = getCurrCfg(options.configName);
-    options.values.forEach((valueItem:any) => {
-      console.log('setConfigValues', {
-        valueItem: valueItem
-      })
-      currCfg.set(valueItem.name, valueItem.value)
-    })
+    options.values.forEach((valueItem: any) => {
+      console.log("setConfigValues", {
+        valueItem: valueItem,
+      });
+      currCfg.set(valueItem.name, valueItem.value);
+    });
   }
 });
 
@@ -264,7 +275,7 @@ ipcMain.handle("customAction", async (event, options = {}) => {
  * @returns
  */
 function getStatItem(obj: any, attr = "sourceStats") {
-  let extension = (obj.extension || "").split(".").join("") || 'unknown' //Fallback to grabing the ext as it is
+  let extension = (obj.extension || "").split(".").join("") || "unknown"; //Fallback to grabing the ext as it is
   if (!extension) {
     console.log({
       obj,
@@ -280,8 +291,8 @@ function getStatItem(obj: any, attr = "sourceStats") {
       ext: extension,
       count: 0,
       size: 0,
-      dupesCount:0,
-      dupesSize: 0
+      dupesCount: 0,
+      dupesSize: 0,
     };
     scope.analysisStats[attr].push(statItem);
   }
@@ -300,6 +311,12 @@ function isFilteredFile(file: any, include: Array<any>) {
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   const currCfg = getCurrCfg(options.name);
 
+  const isDedupe = options.mainAction === "dedupe";
+  const isCopy = options.mainAction === "copy";
+  const isClean = options.mainAction === "clean";
+  const isAnalysis = options.isAnalysis;
+  const isDryRun = options.isDryRun;
+
   options.include = (options.include || []).map((ext: string) =>
     ext.toLowerCase()
   );
@@ -315,10 +332,13 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     options.include.push(ext.toUpperCase());
   });
 
-  let extensions = options.include
-  .map(ext=>(ext.charAt(0)==='.'?ext.substring(1):ext).toLowerCase())
-  extensions = extensions.filter((ext, i)=>extensions.findIndex(e=>e==ext)==i)
-  currCfg.set('extensions', extensions)
+  let extensions = options.include.map((ext: any) =>
+    (ext.charAt(0) === "." ? ext.substring(1) : ext).toLowerCase()
+  );
+  extensions = extensions.filter(
+    (ext: any, i: Number) => extensions.findIndex((e: any) => e == ext) == i
+  );
+  currCfg.set("extensions", extensions);
 
   consoleLog.debug(
     "analyzeSources",
@@ -347,38 +367,44 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     return;
   }
 
-  console.log('sources',{
-    sources
-  })
+  console.log("sources", {
+    sources,
+  });
 
   let computedConfigId = JSON.stringify({
     sources,
     targetDirectory: options.targetDirectory,
   });
   let configId = currCfg.get("id", computedConfigId);
-  
+
   let duplicatedFiles = currCfg.get("duplicatedFiles", []);
   let sourceFiles = currCfg.get("sourceFiles", []);
   let targetFiles = currCfg.get("targetFiles", []);
   let uniqueFiles = currCfg.get("uniqueFiles", []);
+  let targetFilesDupes = currCfg.get("targetFilesDupes", []);
+  
   let isAnalysisComplete = currCfg.get("analysis", false);
-  let existingFilesInTargetDir: any[] = currCfg.get("existingFilesInTargetDir", [])
+  let existingFilesInTargetDir: any[] = currCfg.get(
+    "existingFilesInTargetDir",
+    []
+  );
 
   let hasInvalidCache =
     !isAnalysisComplete ||
     configId != computedConfigId ||
     (sourceFiles.length === 0 && uniqueFiles.length === 0);
 
-  console.log('hasInvalidCache',{
-    '!isAnalysisComplete':!isAnalysisComplete,
-    "configId != computedConfigId":configId != computedConfigId,
-    "(sourceFiles.length === 0 && uniqueFiles.length === 0)": (sourceFiles.length === 0 && uniqueFiles.length === 0),
+  console.log("hasInvalidCache", {
+    "!isAnalysisComplete": !isAnalysisComplete,
+    "configId != computedConfigId": configId != computedConfigId,
+    "(sourceFiles.length === 0 && uniqueFiles.length === 0)":
+      sourceFiles.length === 0 && uniqueFiles.length === 0,
     configId,
-    computedConfigId
-  })
+    computedConfigId,
+  });
 
   if (hasInvalidCache) {
-    configId = computedConfigId
+    configId = computedConfigId;
     isAnalysisComplete = false;
 
     sendEvent({
@@ -389,54 +415,20 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   //Force analysis
   //isAnalysisComplete = false;
 
-  
-
   let processingPercent = 0;
 
   if (!isAnalysisComplete) {
     //Analysis start
-    scope.analysisStats.sourceStats=[]
-    scope.analysisStats.targetStats=[]
+    scope.analysisStats.sourceStats = [];
+    scope.analysisStats.targetStats = [];
 
     sendEvent({
       processingPercent,
     });
 
-    //Read files in the target dir
-
-    let targetFiles = await rraListWrapper(
-      options.targetDirectory,
-      {
-        mode: rra.LIST,
-        recursive: true,
-        stats: true,
-        ignoreFolders: true,
-        extensions: true,
-        deep: true,
-        realPath: true,
-        normalizePath: true,
-        include: options.include || [],
-        readContent: false,
-      },
-      (obj: any) => {
-        if (!obj.isDirectory) {
-          let statItem: any = getStatItem(obj, "targetStats");
-          statItem.count++;
-          statItem.size += obj.stats.size;
-          sendEventStats({
-            targetStats: scope.analysisStats.targetStats,
-          });
-          return false
-        }else{
-          return true
-        }
-      }
-    );
-
-    consoleLog.info(`${targetFiles.length} files in target dir`);
-
+    //=== SOURCE DIRECTORY === START =================================
     //let readResultsPartial: any = [];
-    sourceFiles = []
+    sourceFiles = [];
     await sequential(
       sources.map((sourcePath: string) => {
         return async () => {
@@ -459,7 +451,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             },
             function (obj: any, index: Number, total: Number) {
               if (isFilteredFile(obj, options.include)) {
-                obj.sourcePath = sourcePath
+                obj.sourcePath = sourcePath;
                 let statItem: any = getStatItem(obj);
                 statItem.count++;
                 statItem.size += obj.stats.size;
@@ -467,12 +459,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                   sourceStats: scope.analysisStats.sourceStats,
                 });
                 sendEvent({
-                  processingMessage:"Reading source files..."
+                  processingMessage: "Reading source files...",
                 });
-                sourceFiles.push(obj)
-                return false
-              }else{
-                return true
+                sourceFiles.push(obj);
+                return false;
+              } else {
+                return true;
               }
             }
           );
@@ -494,7 +486,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       processingPercent,
     });
 
-    consoleLog.info("Generating source files MD5")
+    consoleLog.info("Generating source files MD5");
 
     let processingPercentAnimate = processingPercent;
     await sequential(
@@ -510,7 +502,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
           );
           sendEvent({
             processingPercent,
-            processingMessage:"Generating source files md5..."
+            processingMessage: "Generating source files md5...",
           });
         }; //();
       })
@@ -521,6 +513,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       processingPercent,
     });
 
+    //source unique files
+    uniqueFiles = sourceFiles.filter(
+      (f: any, i: Number) =>
+        sourceFiles.findIndex((ff: any) => ff.md5 == f.md5) == i
+    );
+
     /*
     sourceFiles.forEach((file: any, index: Number) => {
       file.duplicates = sourceFiles
@@ -529,72 +527,113 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         .map((f: any) => f.fullname);
     });*/
 
-    processingPercentAnimate = processingPercent;
-    await sequential(
-      targetFiles.map((file: any, index: number) => {
-        return async () => {
-          let md5 = file.md5 || (await md5File(file.fullname));
-          file.md5 = md5;
+    //=== SOURCE DIRECTORY === END =================================
 
-          processingPercent = Math.round(
-            processingPercentAnimate + 20 * ((index + 1) / targetFiles.length)
-          );
-          sendEvent({
-            processingPercent,
-            processingMessage:"Generating target files md5..."
-          });
-        }; //();
-      })
-    );
-    processingPercentAnimate = processingPercent;
+    //=== TARGET DIRECTORY === START =================================
+    //Read files in the target dir
 
-    //source unique files
-    uniqueFiles = sourceFiles.filter(
-      (f: any, i: Number) => sourceFiles.findIndex((ff: any) => ff.md5 == f.md5) == i
-    );
+    if (!isDedupe) {
+      targetFiles = await rraListWrapper(
+        options.targetDirectory,
+        {
+          mode: rra.LIST,
+          recursive: true,
+          stats: true,
+          ignoreFolders: true,
+          extensions: true,
+          deep: true,
+          realPath: true,
+          normalizePath: true,
+          include: options.include || [],
+          readContent: false,
+        },
+        (obj: any) => {
+          if (!obj.isDirectory) {
+            let statItem: any = getStatItem(obj, "targetStats");
+            statItem.count++;
+            statItem.size += obj.stats.size;
+            sendEventStats({
+              targetStats: scope.analysisStats.targetStats,
+            });
+            return false;
+          } else {
+            return true;
+          }
+        }
+      );
+
+      consoleLog.info(`${targetFiles.length} files in target dir`);
+
+      await sequential(
+        targetFiles.map((file: any, index: number) => {
+          return async () => {
+            let md5 = file.md5 || (await md5File(file.fullname));
+            file.md5 = md5;
+            file.uniqueId = await nanoid(5);
+
+            processingPercent = Math.round(
+              processingPercentAnimate + 20 * ((index + 1) / targetFiles.length)
+            );
+            sendEvent({
+              processingPercent,
+              processingMessage: "Generating target files md5...",
+            });
+          }; //();
+        })
+      );
+      existingFilesInTargetDir = uniqueFiles.filter(
+        (f: any) => targetFiles.findIndex((ff: any) => ff.md5 == f.md5) >= 0
+      );
+      currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
+
+      //filter out existing files in target dir
+      uniqueFiles = uniqueFiles.filter((f: any, i: Number) => {
+        let r = !existingFilesInTargetDir.some((ff: any) => ff.md5 == f.md5);
+        return r;
+      });
+      consoleLog.info(
+        `${existingFilesInTargetDir.length} files from source directory already in target directory`
+      );
+
+
+    targetFilesDupes = getDuplicatedFiles(targetFiles)
+
+    targetFilesDupes.forEach((dupeFile: any) => {
+      let statItem = getStatItem(dupeFile, "targetStats");
+      statItem.dupesCount++;
+      statItem.dupesSize += dupeFile.stats.size;
+      sendEventStats({
+        targetStats: scope.analysisStats.targetStats,
+      });
+    });
+    currCfg.set("targetFilesDupes", targetFilesDupes);
+    }
+    //=== TARGET DIRECTORY === END =================================
+
+    processingPercentAnimate = processingPercent;
 
     //duplicated files (source only)
+    /*
     duplicatedFiles = sourceFiles.filter(
       (f: any, i: Number) =>
         !uniqueFiles.some((ff: any) => ff.uniqueId == f.uniqueId) //TODO use unique identifier
-    );
+    );*/
 
-    duplicatedFiles.forEach((dupeFile:any)=>{
-      let statItem = getStatItem(dupeFile, 'sourceStats')
-      statItem.dupesCount++
-      statItem.dupesSize+=dupeFile.stats.size
+    duplicatedFiles = getDuplicatedFiles(sourceFiles)
+
+    duplicatedFiles.forEach((dupeFile: any) => {
+      let statItem = getStatItem(dupeFile, "sourceStats");
+      statItem.dupesCount++;
+      statItem.dupesSize += dupeFile.stats.size;
       sendEventStats({
         sourceStats: scope.analysisStats.sourceStats,
       });
-    })
-
+    });
 
     consoleLog.info({
       uniqueFilesCount: uniqueFiles.length,
       duplicatedFilesCount: duplicatedFiles.length,
     });
-
-    existingFilesInTargetDir = uniqueFiles.filter(
-      (f: any) => targetFiles.findIndex((ff: any) => ff.md5 == f.md5) >= 0
-    );
-    currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
-
-    //filter out existing files in target dir
-    uniqueFiles = uniqueFiles.filter((f: any, i: Number) => {
-      let r = !existingFilesInTargetDir.some((ff: any) => ff.md5 == f.md5);
-      return r;
-    });
-
-    /*
-    existingFilesInTargetDir.forEach((f: any, i: Number) => {
-      consoleLog.verbose(
-        `[${i}] ${f.name} / ${f.md5} found in target directory (Skip) `
-      );
-    });*/
-
-    consoleLog.info(
-      `${existingFilesInTargetDir.length} files which already exists in target directory will be skip`
-    );
 
     const renamedCount = 0;
     uniqueFiles.forEach((file: any, index: number) => {
@@ -610,7 +649,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
           file.extension;
         /*consoleLog.verbose(
           `${file.fullname} -> ${file.newName} (${
-            options.isDryRun ? "would" : "will"
+            isDryRun ? "would" : "will"
           } be renamed)`
         );*/
       }
@@ -621,9 +660,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
-
-  
-  
 
     currCfg.set(
       "sourceItems",
@@ -662,75 +698,79 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     ? uniqueFiles.length
     : existingFilesInTargetDir.length;
 
-  scope.resultStats.freedSize=0
+  if (options.mainAction === "dedupe") {
+    affectedFilesCount = sourceFiles.length;
+  }
+
+  //Reset result stats
+  Object.keys(scope.resultStats).forEach((key) => {
+    scope.resultStats[key] = 0;
+  });
+
   scope.resultStats.filesCount = affectedFilesCount;
-  scope.resultStats.dupesCount = 0
 
   consoleLog.log(
-    `${affectedFilesCount} files ${options.isDryRun ? "would be" : "will be"} ${
+    `${affectedFilesCount} files ${isDryRun ? "would be" : "will be"} ${
       mainActionLabelPast[options.mainAction.toString()]
     }`
   );
 
-  if (options.isDryRun) {
+  if (isAnalysis) {
     consoleLog.log("Finish after analysis");
   } else {
     processingPercent = 0;
 
-    let processingPercentAnimate = processingPercent;
-
     //CLEAN: If clean, remove skipped files from sources
-    if (!options.isDryRun && ["clean"].includes(options.mainAction)) {
-      await Promise.all(
-        existingFilesInTargetDir.map((f: any, index: number) => {
-          return (async () => {
-            let reason =
-              options.mainAction === "move"
-                ? "Skip move because already present in target directory"
-                : "already present in target directory";
-            if (!options.isDryRun) {
-              await tryCatchAsync(
-                () => sander.rimraf(f.fullname),
-                {
-                  path: f.fullname,
-                },
-                "Remove operation fail"
-              );
-
-              processingPercent = Math.round(
-                processingPercentAnimate +
-                  100 * ((index + 1) / existingFilesInTargetDir.length)
-              );
-              scope.resultStats.freedSize+=f.stats.size
-              sendEvent({
-                processingPercent,
-                processingMessage: 'Removing duplicated files...',
-              });
-
-              consoleLog.verbose(
-                `${f.fullname} (Removed from source) (${reason})`
-              );
-            } else {
-              consoleLog.verbose(
-                `${f.fullname} (Would remove from source) (${reason})`
-              );
-            }
-          })();
-        })
+    if (["clean"].includes(options.mainAction)) {
+      scope.resultStats.originalCount = sourceFiles.length;
+      scope.resultStats.originalSize = sourceFiles.reduce(
+        (a: Number, f: any) => a + f.stats.size,
+        0
       );
-      consoleLog.info(
-        `${existingFilesInTargetDir.length} files ${
-          options.isDryRun ? "should have been" : "were"
-        } removed from sources (Because already exists in target directory)`
+      processingPercent = await removeFiles(existingFilesInTargetDir, {
+        isDryRun,
+        processingPercent,
+        reason: "clean",
+      });
+      scope.resultStats.finalCount =
+        scope.resultStats.originalCount - scope.resultStats.removedFilesCount;
+      scope.resultStats.finalSize =
+        scope.resultStats.originalSize - scope.resultStats.freedSize;
+    }
+
+    //DEDUPE: Remove duplicates in source directories
+    if (["dedupe", "clean"].includes(options.mainAction)) {
+      scope.resultStats.originalCount = sourceFiles.length;
+      scope.resultStats.originalSize = sourceFiles.reduce(
+        (a: Number, f: any) => a + f.stats.size,
+        0
       );
+      processingPercent = await removeFiles(duplicatedFiles, {
+        isDryRun,
+        processingPercent,
+        reason: "dedupe",
+      });
+      scope.resultStats.finalCount =
+        scope.resultStats.originalCount - scope.resultStats.removedFilesCount;
+      scope.resultStats.finalSize =
+        scope.resultStats.originalSize - scope.resultStats.freedSize;
     }
 
     //COPY OR MOVE MAIN ACTION
-    if (!options.isDryRun && ["copy", "move"].includes(options.mainAction)) {
+    if (["copy", "move"].includes(options.mainAction)) {
+
+      scope.resultStats.originalCount = existingFilesInTargetDir.length
+      scope.resultStats.originalSize = existingFilesInTargetDir.reduce(
+        (a: Number, f: any) => a + f.stats.size,
+        0
+      );
+
+     
+
       let processingPercentAnimate = processingPercent;
-      let sourceFilesSize = sumFilesSize(sourceFiles)
-      let acumSize = 0
-      
+    
+      let copiedFiles:any = []
+
       await sequential(
         uniqueFiles.map((file: any, index: number) => {
           return async () => {
@@ -745,7 +785,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             //FLAT MODE
             if (options.targetDirectoryStructure === "flat") {
               targetPath = path.join(targetBasePath, targetFileName);
-              if (!options.isDryRun) {
+              if (!isDryRun) {
                 await copyOrMoveFile(
                   options.mainAction,
                   sourceBasePath,
@@ -766,7 +806,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                 createdDate.format("DD")
               );
               targetPath = path.join(targetBasePath, targetFileName);
-              if (!options.isDryRun) {
+              if (!isDryRun) {
                 await copyOrMoveFile(
                   options.mainAction,
                   sourceBasePath,
@@ -787,7 +827,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               mimeType = mimeType || "unknown";
               targetBasePath = path.join(targetBasePath, mimeType);
               targetPath = path.join(targetBasePath, targetFileName);
-              if (!options.isDryRun) {
+              if (!isDryRun) {
                 await copyOrMoveFile(
                   options.mainAction,
                   sourceBasePath,
@@ -809,7 +849,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
             }
             consoleLog.verbose(
               `${file.fullname} to ${targetPath} ${
-                options.isDryRun
+                isDryRun
                   ? `(Would be ${mainActionLabelPast[
                       options.mainAction
                     ].toLowerCase()})`
@@ -821,16 +861,36 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               processingPercentAnimate +
                 100 * ((index + 1) / uniqueFiles.length)
             );
-            acumSize+file.stats.size
+            
+
+            scope.resultStats.copyCount++
+            scope.resultStats.copySize+= file.stats.size;
+            copiedFiles.push(file)
+
             sendEvent({
               processing: true,
               processingPercent,
-              processingMessage: 'Copying files...',
+              processingMessage: "Copying files...",
             });
           }; //();
         })
       );
-      scope.resultStats.freedSize = Math.abs(sourceFilesSize - acumSize)
+
+      //Sum of size of skipped dupes for each copied file
+      scope.resultStats.dedupeCount = copiedFiles.reduce((a:Number,f:any)=>{
+        let dupesCount = duplicatedFiles.filter((ff:any)=>{
+          let isDupe = ff.md5==f.md5
+          if(isDupe){
+            scope.resultStats.dedupeSize+=ff.stats.size
+          }
+          return isDupe
+        }).length;
+        return a + dupesCount
+      },0)
+
+      scope.resultStats.finalCount = scope.resultStats.originalCount + copiedFiles.length
+      scope.resultStats.finalSize = scope.resultStats.originalSize + sumFilesSize(copiedFiles)
+      
       consoleLog.info(
         `${mainActionLabelVerb[options.mainAction]} process ended`
       );
@@ -840,19 +900,79 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   sendEvent({
     processing: false,
     processingPercent: 100,
-    processingMessage:'',
-    resultStats:{
-      ...scope.resultStats
-    }
+    processingMessage: "",
+    resultStats: {
+      ...scope.resultStats,
+    },
   });
 
   return;
 });
 
-function sumFilesSize(arr: Array<any>){
-  return arr.reduce((a,v)=>{
-    return a+v.stats.size
-  },0)
+function getDuplicatedFiles(files:any[]){
+  return files.reduce((a:any,f:any)=>{
+    if(a.some((fff:any)=>fff.md5==f.md5)){
+      return a//already processed
+    }
+    let dupesArr = files.filter((ff:any)=>ff.md5==f.md5 && ff.uniqueId !== f.uniqueId)
+    a = [
+      ...a,
+      ...dupesArr
+    ]
+    return a
+  },[])
+}
+
+async function removeFiles(files: any = [], options: any = {}) {
+  let reason = options.reason || "(no-reason)";
+  options.processingPercentAnimate = options.processingPercentAnimate;
+  await Promise.all(
+    files.map((f: any, index: number) => {
+      return (async () => {
+        if (!options.isDryRun) {
+          await tryCatchAsync(
+            () => sander.rimraf(f.fullname),
+            {
+              path: f.fullname,
+            },
+            "Remove operation fail"
+          );
+
+          options.processingPercent = Math.round(
+            options.processingPercentAnimate +
+              (options.processingPercentIncrement || 100) *
+                ((index + 1) / files.length)
+          );
+          scope.resultStats.freedSize += f.stats.size;
+          scope.resultStats.removedFilesCount++;
+          sendEvent({
+            processingPercent: options.processingPercent,
+            processingMessage: "Removing files...",
+          });
+
+          consoleLog.verbose(
+            `${f.fullname} (Removed from sources) (${reason})`
+          );
+        } else {
+          consoleLog.verbose(
+            `${f.fullname} (Would remove from sources) (${reason})`
+          );
+        }
+      })();
+    })
+  );
+  consoleLog.info(
+    `${files.length} files ${
+      options.isDryRun ? "should have been" : "were"
+    } removed (${reason})`
+  );
+  return options.processingPercent;
+}
+
+function sumFilesSize(arr: Array<any>) {
+  return arr.reduce((a, v) => {
+    return a + v.stats.size;
+  }, 0);
 }
 
 async function copyOrMoveFile(
@@ -865,6 +985,7 @@ async function copyOrMoveFile(
   let targetPath = path.join(targetBasePath, targetFileName);
   if (mainAction === "copy") {
     await copyFile(path.join(sourceBasePath, sourceFileName), targetPath);
+    
   }
   if (mainAction === "move") {
     await moveFile(
@@ -932,11 +1053,11 @@ function sendEventStatsUsingCacheAnalysis(
     statItem.size += item.stats.size;
   });
 
-  duplicatedFiles.forEach((dupeFile:any)=>{
-    let statItem = getStatItem(dupeFile, 'sourceStats')
-    statItem.dupesCount++
-    statItem.dupesSize+=dupeFile.stats.size
-  })
+  duplicatedFiles.forEach((dupeFile: any) => {
+    let statItem = getStatItem(dupeFile, "sourceStats");
+    statItem.dupesCount++;
+    statItem.dupesSize += dupeFile.stats.size;
+  });
 
   sendEventStats({
     sourceStats: scope.analysisStats.sourceStats,

@@ -3,11 +3,24 @@
     .center
         BrandCenter
         .btn-group
-            BigButton(@click="$emit('click')") Start
-            //BigButton(@click="$emit('click')") Half way done
+            BigButton(@click="selectAction('dedupe')") Dedupe
+            BigButton(@click="selectAction('copy')") Copy
+            BigButton(@click="selectAction('clean')") Clean
 </template>
 
-<script setup></script>
+<script setup>
+import { inject } from "vue";
+import { PrakStateSymbol } from "@/constants.js";
+const emit = defineEmits(['click'])
+const {
+  mainAction,
+} = inject(PrakStateSymbol);
+
+function selectAction(name){
+  mainAction.value = name
+  emit('click')
+}
+</script>
 <style scoped>
 .step-one {
   background-color: var(--grey);
