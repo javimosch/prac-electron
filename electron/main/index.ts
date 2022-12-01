@@ -910,18 +910,37 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   return;
 });
 
-async function getExifDate(filePath: String) {
-  let buf = await sander.readFile(filePath);
-  var parser = require("exif-parser").create(buf);
-  var result = parser.parse();
-  let date = result?.tags?.CreateDate
-    ? new Date(result?.tags?.CreateDate * 1000)
-    : null;
-  /*
+async function getExifDate(filePath) {
+  let buf 
+  try{
+    buf= await sander.readFile(filePath);
+  }catch(err:any){
+    if(err.stack.includes('no such file')){
+      console.log('Failed to parse exif (not found)', filePath)
+      return null
+    }
+  }
+  if(!['.jpeg','.jpg'].some(ext=>filePath.toLowerCase().includes(ext))){
+    return null
+  }
+  try {
+    var parser = require("exif-parser").create(buf);
+    var result = parser.parse();
+    let date = result?.tags?.CreateDate
+      ? new Date(result?.tags?.CreateDate * 1000)
+      : null;
+    /*
 console.log({
     result
 })*/
-  return date;
+    return date;
+  } catch (err:any) {
+    console.log('Failed to parse exif',{
+      filePath,
+      error:err.stack
+    })
+    return null;
+  }
 }
 
 function getDuplicatedFiles(files:any[]){
