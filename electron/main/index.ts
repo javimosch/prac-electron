@@ -798,7 +798,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
             //DATE MODE
             if (options.targetDirectoryStructure === "date") {
-              let createdDate = moment(file.stats.ctime);
+              let exifDate = await getExifDate(sourcePath)
+              let createdDate = exifDate ? moment(exifDate) : moment(file.stats.ctime);
               targetBasePath = path.join(
                 targetBasePath,
                 createdDate.format("YYYY"),
@@ -908,6 +909,20 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
   return;
 });
+
+async function getExifDate(filePath: String) {
+  let buf = await sander.readFile(filePath);
+  var parser = require("exif-parser").create(buf);
+  var result = parser.parse();
+  let date = result?.tags?.CreateDate
+    ? new Date(result?.tags?.CreateDate * 1000)
+    : null;
+  /*
+console.log({
+    result
+})*/
+  return date;
+}
 
 function getDuplicatedFiles(files:any[]){
   return files.reduce((a:any,f:any)=>{
