@@ -25,7 +25,7 @@ let computedBorderColor = computed({
 </script>
 <style scoped>
 .button {
-  font-family: "Lato", sans-serif;
+  
   font-weight: 300;
   border: 2px solid v-bind(computedBorderColor);
   width: fit-content;

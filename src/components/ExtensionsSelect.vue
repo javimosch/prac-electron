@@ -1,5 +1,5 @@
 <template lang="pug">
-SelectMultiple(title="FIND DUPLICATES BY EXTENSIONS" :options="options" v-model="extensions")
+SelectMultiple(title="Camera's image raw file selection" :options="options" v-model="extensions")
 </template>
 <script setup>
 import { ref, inject, watch } from "vue";

@@ -1,8 +1,8 @@
 <script setup>
 import LoggingLevels from "./LoggingLevels.vue";
 import { ref, inject, computed, onMounted, onUnmounted, watch } from "vue";
-import { CleaningServicesOutlined,SettingsTwotone } from '@vicons/material'
-import { Icon } from '@vicons/utils'
+import { CleaningServicesOutlined, SettingsTwotone } from "@vicons/material";
+import { Icon } from "@vicons/utils";
 import {
   NSpace,
   NButton,
@@ -19,8 +19,13 @@ import {
 } from "naive-ui";
 import { useLoadingBar } from "naive-ui";
 import moment from "moment";
-
+import { storeToRefs } from "pinia";
+import { useAppStore } from "@/stores/app";
 import { PrakStateSymbol } from "@/constants.js";
+
+const appStore = useAppStore();
+const { brandSubtitle } = storeToRefs(appStore);
+
 const {
   sourceFolders,
   targetDirectory,
@@ -33,28 +38,27 @@ const {
   hasAnalysisCache,
   processingPercent,
   loggingLevel,
-  isCopySettingsAreaVisible
+  isCopySettingsAreaVisible,
 } = inject(PrakStateSymbol);
 
 const stats = ref({
-  targetStats:[],
-  sourceStats:[]
-})
+  targetStats: [],
+  sourceStats: [],
+});
 
 function formatBytes(bytes, decimals = 2) {
-    if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
 
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
 
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
-const emit = defineEmits(['gotoStep'])
-
+const emit = defineEmits(["gotoStep"]);
 
 const loadingBar = useLoadingBar();
 
@@ -69,33 +73,31 @@ watch(
     }
   }
 );*/
-let unbindOnEvent
-onMounted(()=>{
+let unbindOnEvent;
+onMounted(() => {
+  brandSubtitle.value = "Run Analysis";
+
   unbindOnEvent = window.electronAPI.onAnalysisStat((message) => {
-    
-      Object.keys(stats.value).forEach(key=>{
-        if(message[key]!==undefined){
-          stats.value[key]=message[key]
-        }
-      })
-     
+    Object.keys(stats.value).forEach((key) => {
+      if (message[key] !== undefined) {
+        stats.value[key] = message[key];
+      }
     });
+  });
 
-    if(canRunAnalysis){
-      executeAnalysis(true)
-    }
-})
-onUnmounted(()=>{
+  if (canRunAnalysis) {
+    executeAnalysis(true);
+  }
+});
+onUnmounted(() => {
   unbindOnEvent();
-})
+});
 
-function cleanAnalysisCache(){
+function cleanAnalysisCache() {
   window.electronAPI.customAction({
-    name:'cleanAnalysisCache',
-  })
+    name: "cleanAnalysisCache",
+  });
 }
-
-
 
 function normalizeExtensions(extensions) {
   if (extensions.value.some((v) => v === "all")) {
@@ -108,10 +110,9 @@ function normalizeExtensions(extensions) {
     .map((v) => `.` + v.split(".").join("").trim());
 }
 
-
 async function executeAnalysis(isAnalysis = false) {
-  stats.value.sourceStats = []
-  stats.value.targetStats = []
+  stats.value.sourceStats = [];
+  stats.value.targetStats = [];
   loadingBar.start();
   isLoading.value = true;
   outputResult.value = "";
@@ -135,10 +136,10 @@ async function executeAnalysis(isAnalysis = false) {
   //outputResult.value = actions.map((action) => action.html).join("");
 }
 
-async function executeMainAction(actionName){
+async function executeMainAction(actionName) {
   mainAction.value = actionName;
-  await executeAnalysis(false)
-  emit('gotoStep','ProcessingView')
+  await executeAnalysis(false);
+  emit("gotoStep", "ProcessingView");
 }
 
 let isAnalysisInProgress = computed({
@@ -155,7 +156,7 @@ let canSwitchView = computed({
 let canRunAnalysis = computed({
   get: () => {
     return (
-      isAnalysisInProgress.value===false &&
+      isAnalysisInProgress.value === false &&
       isLoading.value == false &&
       sourceFolders.value.length > 0 &&
       targetDirectory.value.length > 0 &&
@@ -167,38 +168,34 @@ let canRunAnalysis = computed({
 let canRunMainAction = computed({
   get: () => {
     return (
-      isAnalysisComplete.value===true && //Has comple analysis
+      isAnalysisComplete.value === true && //Has comple analysis
       isLoading.value == false && //Is not loading
       sourceFolders.value.length > 0 && //Has selected source folders
-      (targetDirectory.value.length > 0 || mainAction.value==='dedupe') &&
-      extensions.value.length > 0 &&  //Has extensions
-      stats.value.sourceStats.length>0 //There are files in sourceFolders
+      (targetDirectory.value.length > 0 || mainAction.value === "dedupe") &&
+      extensions.value.length > 0 && //Has extensions
+      stats.value.sourceStats.length > 0 //There are files in sourceFolders
     );
   },
 });
 </script>
 
 <template lang="pug">
-.steps
-  StepZeroBar(@click="canSwitchView&& $emit('gotoStep','StartView')" :style="canSwitchView?'cursor:pointer':''")
-  StepOneBar(@click="canSwitchView&&$emit('gotoStep','SourceTargetView')" :style="canSwitchView?'cursor:pointer':''")
-  .main
-    StepTitle
-      | Analysis
-    .h-layout
-      .left-layout
-        label Source
-        AnalysisExtensionsStats(:stats="stats.sourceStats")
-
+//StepZeroBar(@click="canSwitchView&& $emit('gotoStep','StartView')" :style="canSwitchView?'cursor:pointer':''")
+//StepOneBar(@click="canSwitchView&&$emit('gotoStep','SourceTargetView')" :style="canSwitchView?'cursor:pointer':''")
+Layout
+  .h-layout
+    .left-layout
+      
+      .two-buttons
         .two-buttons
           n-tooltip( trigger="hover"      )
             template(#trigger)
-              NormalButton(style="margin-top:15px" borderColor="grey" color="black"
+              BigButton(style="margin-top:15px" borderColor="grey" color="white"
                 :disabled="!canRunAnalysis"
                 @click="canRunAnalysis && executeAnalysis(true)"
                 ) 
-                  span(v-show="!isAnalysisComplete") ANALYZE
-                  span(v-show="isAnalysisComplete") RE-ANALYZE
+                  span(v-show="!isAnalysisComplete") Run Analysis
+                  span(v-show="isAnalysisComplete") Re-Run Analysis
                   NSpin(
                     v-show="isAnalysisInProgress"
                     size="large")
@@ -206,79 +203,63 @@ let canRunMainAction = computed({
           div(v-show="hasAnalysisCache")
             n-tooltip( trigger="hover"      )
               template(#trigger)
-                NormalButton.sm( borderColor="grey" color="black" style="margin-top:15px"
+                BigButton.sm( borderColor="grey" color="white" style="margin-top:15px"
                 @click="cleanAnalysisCache()"
                 )
-                  Icon(size="30" color="black")
+                  Icon(size="30" color="white")
                     CleaningServicesOutlined
               p Clear analysis cache
         
         .two-buttons(v-if="mainAction==='copy'")
           n-tooltip(trigger="hover")
             template(#trigger)
-              NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('copy')"
+              BigButton(style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('copy')"
               :disabled="!canRunMainAction"
               ) COPY
             p Sync/Copy to target (Deduping and skipping existing files)
           
           n-tooltip( trigger="hover"      )
             template(#trigger)
-              NormalButton.sm( borderColor="grey" color="black" style="margin-top:15px"
+              BigButton.sm( borderColor="grey" color="white" style="margin-top:15px"
               @click="()=>canRunMainAction ? isCopySettingsAreaVisible=true : null" :disabled="!canRunMainAction"
               )
-                Icon(size="30" color="black")
+                Icon(size="30" color="white")
                   SettingsTwotone
             p Copy settings area
 
 
         n-tooltip(v-if="mainAction==='clean'" trigger="hover"      )
           template(#trigger)
-            NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
+            BigButton(style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
           p Free space removing source files present in Target directory and duplicates.
 
         n-tooltip(v-if="mainAction==='dedupe'" trigger="hover"      )
           template(#trigger)
-            NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") DEDUPE
+            DedupeButton(style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") DEDUPE
           p Remove duplicates in the selected directories
         
- 
-        //div
-          label Source
-          AnalysisStat(title="Files found" :value="stats.sourceFileCount")
-          AnalysisStat(title="Size" :value="formatBytes(stats.sourceFilesSizeTotal)")
-          label Target
-          AnalysisStat(title="Files found" :value="43")
-          AnalysisStat(title="Size" :value="1.5")
-      .right-layout(v-if="mainAction!=='dedupe'")
-        label Target  
-        AnalysisExtensionsStats(:stats="stats.targetStats")
-        //n-tooltip( trigger="hover"      )
-          template(#trigger)
-            NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="()=>{}" :disabled="true") DEDUPE
-          p Free space deduping in target directory
-        
-    LoadingBar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
-    OverviewText 
-  StepThreeBar  
-   
+      label Source
+      AnalysisExtensionsStats(:stats="stats.sourceStats")
+
+      //div
+        label Source
+        AnalysisStat(title="Files found" :value="stats.sourceFileCount")
+        AnalysisStat(title="Size" :value="formatBytes(stats.sourceFilesSizeTotal)")
+        label Target
+        AnalysisStat(title="Files found" :value="43")
+        AnalysisStat(title="Size" :value="1.5")
+    .right-layout(v-if="mainAction!=='dedupe'")
+      label Target  
+      AnalysisExtensionsStats(:stats="stats.targetStats")
+      //n-tooltip( trigger="hover"      )
+        template(#trigger)
+          NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="()=>{}" :disabled="true") DEDUPE
+        p Free space deduping in target directory
+      
+  LoadingBar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
+  OverviewText 
 </template>
 <style scoped>
-.steps {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.main {
-  padding: 20px;
-  background-color: var(--sand);
-  display: flex;
-  flex-direction: column;
-  justify-content: start;
-  row-gap: 20px;
-  min-height: calc(100vh - 40px);
-  width: calc(100vw - 200px);
-}
-
 .center {
   background-color: var(--sand);
   display: flex;
@@ -305,13 +286,15 @@ let canRunMainAction = computed({
   display: flex;
   column-gap: 10px;
 }
-label{
-  font-family: 'Lato', sans-serif;
-  font-weight:300;
-  font-size:16px;
+label {
+  font-weight: 300;
+  font-size: 16px;
 }
-.two-buttons{
-  display:flex;
+.two-buttons {
+  display: flex;
   column-gap: 5px;
+}
+span{
+  white-space: nowrap;
 }
 </style>

@@ -4,7 +4,7 @@
 </template>
 <style scoped>
 .step-title{
-    font-family: 'Lato', sans-serif;
+    
     font-size: 30px;
     font-weight: 300;
     text-transform: uppercase;

@@ -1,17 +1,20 @@
 <template lang="pug">
 .path(@click="emit('remove',fullPath)")
-    p 
-        span Folder name: {{getFolderName(fullPath)}}
-        span Full path: {{fullPath}}
+    img(:src="sourceDiskIcon")
+    p
+        span {{getFolderName(fullPath)}}
+        .separator
+        span {{fullPath}}
     .close-icon
         Icon(size="30" color="white")
-        CloseOutlined 
+          CloseOutlined 
 </template>
 
 <script setup>
 import { computed, inject } from "vue";
 import { Icon } from "@vicons/utils";
 import { CloseOutlined } from "@vicons/material";
+import sourceDiskIcon from "@/assets/source-disk.svg";
 
 const emit = defineEmits(['remove'])
 
@@ -29,7 +32,9 @@ const getFolderName = computed(() => {
 
 </script>
 <style scoped>
-
+img{
+  max-width:25px;
+}
 
 .path p {
   display: flex;
@@ -38,9 +43,9 @@ const getFolderName = computed(() => {
 }
 .path {
   color: white;
-  font-family: Lato;
   font-size: 18px;
   padding: 10px 15px;
+  column-gap: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -53,5 +58,12 @@ const getFolderName = computed(() => {
   opacity: 0;
 }
 
+span{
+text-transform: uppercase;
+}
+.separator{
+  border-bottom:1px solid white;
+  margin:5px 0px;
+}
 
 </style>

@@ -1,36 +1,44 @@
 <template lang="pug">
-.steps
-    StepZeroBar(@click="$emit('gotoStep','StartView')")
-    StepOneBar(@click="$emit('gotoStep','SourceTargetView')")
-    StepTwoBar(@click="$emit('gotoStep','AnalysisView')")
-    .main
-        .center(v-show="isDedupe||isClean")
-            ResultStat(title="Original count" :value="originalCount")
-            ResultStat(title="Original size" :value="originalSize")
-            ResultStat(title="Final count" :value="finalCount")
-            ResultStat(title="Final size" :value="finalSize")
-        .center(v-show="isCopy")
-            ResultStat(title="Copy count" :value="copyCount")
-            ResultStat(title="Copy size" :value="copySize")
-            ResultStat(title="Dedupe count" :value="dedupeCount")
-            ResultStat(title="Dedupe size" :value="dedupeSize")
-            ResultStat(title="Original target count" :value="originalCount")
-            ResultStat(title="Original target size" :value="originalSize")
-            ResultStat(title="Final target count" :value="finalCount")
-            ResultStat(title="Final target size" :value="finalSize")
-            
-            //ResultStat(
-              v-show="dupesCount"
-              title="Duplicates" :value="dupesCount")
-            //ResultStat(title="Freed space" :value="freedSizeFormatted")
-        BigButton(@click="finish") Go Back
-    </template>
+Layout
+  .main
+    .center(v-show="isDedupe||isClean")
+        ResultStat(title="Original count" :value="originalCount")
+        ResultStat(title="Original size" :value="originalSize")
+        ResultStat(title="Final count" :value="finalCount")
+        ResultStat(title="Final size" :value="finalSize")
+    .center(v-show="isCopy")
+        ResultStat(title="Copy count" :value="copyCount")
+        ResultStat(title="Copy size" :value="copySize")
+        ResultStat(title="Dedupe count" :value="dedupeCount")
+        ResultStat(title="Dedupe size" :value="dedupeSize")
+        ResultStat(title="Original target count" :value="originalCount")
+        ResultStat(title="Original target size" :value="originalSize")
+        ResultStat(title="Final target count" :value="finalCount")
+        ResultStat(title="Final target size" :value="finalSize")
+        
+        //ResultStat(
+          v-show="dupesCount"
+          title="Duplicates" :value="dupesCount")
+        //ResultStat(title="Freed space" :value="freedSizeFormatted")
+    BigButton(@click="finish") Go Back
+</template>
 <script setup>
-import {inject, computed} from "vue"
+import {inject, computed, onMounted} from "vue"
 import { PrakStateSymbol } from "@/constants.js";
+import { storeToRefs } from "pinia";
+import { useAppStore } from "@/stores/app";
 
+
+const appStore = useAppStore();
+const { brandSubtitle } = storeToRefs(appStore);
 const state = inject(PrakStateSymbol);
 const emit = defineEmits(['gotoStep'])
+
+
+onMounted(()=>{
+  brandSubtitle.value="Dedupe files"
+})
+
 function finish(){
   //status.value='analysis_required'
   state.reset.value()
@@ -89,20 +97,13 @@ function formatBytes(bytes, decimals = 2) {
 
 </script>
 <style scoped>
-.steps {
-  display: flex;
-  justify-content: flex-start;
-}
 
 .main {
-  padding: 20px;
-  background-color: var(--orange);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   row-gap: 20px;
-  width: calc(100vw - 200px);
   min-height: calc(100vh - 40px);
 }
 .center{

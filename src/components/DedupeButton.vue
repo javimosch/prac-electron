@@ -34,7 +34,7 @@ let computedBorderColor = computed({
   font-weight: 400;
   color: v-bind(color);
   text-transform: uppercase;
-  background-color: var(--buttons);
+  background-color: var(--dark);
 }
 .button.disabled{
     background-color:lightgrey;

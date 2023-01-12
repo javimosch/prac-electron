@@ -4,9 +4,9 @@ import { createPinia } from 'pinia'
 import "./main.css";
 
 // General Font
-import "vfonts/Lato.css";
+//import "vfonts/Lato.css";
 // Monospace Font
-import "vfonts/FiraCode.css";
+//import "vfonts/FiraCode.css";
 
 
 const pinia = createPinia()

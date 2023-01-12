@@ -2,7 +2,7 @@
 
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
 import TargetFolderList from "./components/TargetFolderList.vue";
-import SourceFolderList from "./components/SourceFolderList.vue";
+
 import StepZero from "./components/StartView.vue";
 import {
   NButton,

@@ -1,19 +1,19 @@
 <template lang="pug">
 .root
     .section.titles
-        div Ext
+        div.ext Ext
         div.value Count
         div.value Dupes Count
         div.value Dupes size
         div.value Size
     .section.values(v-for="stat in props.stats")
-        div {{stat.ext.toUpperCase()}}
+        div.ext {{stat.ext.toUpperCase()}}
         div.value {{stat.count||0}}
         div.value {{stat.dupesCount||0}}
         div.value {{formatBytes(stat.dupesSize||0)}}
         div.value {{formatBytes(stat.size||0)}}
     .section.totals
-        div Total
+        div.ext Total
         div.value {{imagesCountTotal}}
         div.value {{dupesCountTotal}}
         div.value {{formatBytes(dupesSizeTotal)}}
@@ -69,7 +69,7 @@ let sizeTotal = computed({
 </script>
 <style scoped>
 .root {
-  font-family: "Lato", sans-serif;
+  
   font-size: 25px;
   font-weight: 300;
   display: flex;
@@ -83,7 +83,7 @@ let sizeTotal = computed({
   display: flex;
     justify-content: space-between;
     column-gap: 20px;
-    border: 2px solid grey;
+    border: 1px solid white;
     padding: 5px 15px;
     font-size: 20px;
     display: flex;
@@ -98,8 +98,14 @@ let sizeTotal = computed({
 }
 .section.totals {
   margin-top: 20px;
+  background-color: var(--buttons);
 }
 .section div {
   flex-basis: 25%;
+}
+
+.value:not(:last-child), .ext{
+  border-right: 1px solid white;
+  padding-right:5px;
 }
 </style>

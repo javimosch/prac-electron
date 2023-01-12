@@ -3,7 +3,8 @@ import sourceCloudIcon from "@/assets/source-cloud.svg";
 import sourceDiskIcon from "@/assets/source-disk.svg";
 import sourceSdCardIcon from "@/assets/source-sd-card.svg";
 import { inject } from "vue";
-
+import { Icon } from "@vicons/utils";
+import { ArrowDropDownFilled } from "@vicons/material";
 import { PrakStateSymbol } from "@/constants.js";
 const { sourceFolders } = inject(PrakStateSymbol);
 
@@ -17,28 +18,34 @@ function removeFolder(fullPath) {
     1
   );
 }
-
-
 </script>
 
 <template lang="pug">
 VeryBigButton(@click="selectSourceFolders")
-  span Select sources
-  img(:src="sourceCloudIcon")
-  img(:src="sourceDiskIcon")
-  img(:src="sourceSdCardIcon")
+  .button-content
+    img(:src="sourceDiskIcon")
+    //img(:src="sourceCloudIcon")
+    span Select sources
+    //img(:src="sourceSdCardIcon")
+    Icon(size="30" color="white")
+      ArrowDropDownFilled
 .paths
   FolderListItem(v-for="fullPath in sourceFolders" :key="fullPath" :fullPath="fullPath" @remove="fullPath => removeFolder(fullPath)")
 </template>
 
 <style scoped>
-
-.paths{
+.button-content {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+.paths {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  row-gap:10px;
-  margin-top:20px;
+  row-gap: 10px;
+  margin-top: 20px;
 }
 
 img {

@@ -17,7 +17,7 @@ const props = defineProps({
 </script>
 <style scoped>
 .root {
-    font-family: "Lato", sans-serif;
+    
     font-size: 25px;
     font-weight: 300;
     border: 2px solid white;

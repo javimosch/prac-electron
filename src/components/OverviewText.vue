@@ -34,14 +34,13 @@ const getFolderName = computed(() => {
 </script>
 <style scoped>
 .overview {
-  font-family: "Lato", sans-serif;
+  margin-top:15px;
   display: flex;
   justify-content: space-around;
   column-gap: 10px;
   font-size: 18px;
-  border:2px solid grey;
+  border:2px solid white;
   padding:15px 20px;
-  color:black;
   font-weight: 300;
   flex-direction: column;
 }

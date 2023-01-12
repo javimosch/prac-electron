@@ -52,7 +52,6 @@ export default {
       targetDirectoryStructure: ref("flat"),
       reset,
 
-      currentView:ref('StartView')
     });
 
     state.reset();
