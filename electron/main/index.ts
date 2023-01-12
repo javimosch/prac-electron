@@ -7,6 +7,16 @@ import * as rra from "recursive-readdir-async";
 //import { customAlphabet } from "nanoid/async";
 //const { customAlphabet } = require("nanoid/async");
 
+
+/*import { MikroORM } from '@mikro-orm/core';
+import config from './mikro-orm-config';
+
+const ormStart = async()=>{
+  const orm = await MikroORM.init(config);
+}
+ormStart().then(console.log).catch(console.error);
+*/
+
 const consoleLog = require("electron-log");
 consoleLog.catchErrors({
   showDialog: true,

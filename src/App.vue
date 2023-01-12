@@ -20,9 +20,11 @@ import {
 import { lightTheme } from "naive-ui";
 // locale & dateLocale
 import { enUS, dateEnUS, frFR, dateFrFR } from "naive-ui";
-
 import { ref, inject} from "vue";
+import {storeToRefs} from 'pinia'
+import { useAppStore } from '@/stores/app'
 
+const appStore = useAppStore()
 
 const options = ref([
   {
@@ -32,10 +34,10 @@ const options = ref([
 ]);
 const configName = ref("default");
 
-let viewName = ref("StartView");
+const { currentViewName } = storeToRefs(appStore)
 
 function gotoView(viewNameParam) {
-  viewName.value = viewNameParam;
+  currentViewName.value = viewNameParam;
 }
 </script>
 
@@ -50,20 +52,20 @@ function gotoView(viewNameParam) {
         <StartView
           @click="gotoView('SourceTargetView')"
           @gotoStep="(n) => gotoView(n)"
-          v-if="viewName === 'StartView'"
+          v-if="currentViewName === 'StartView'"
         />
         <SourceTargetView
           @clickNext="gotoView('AnalysisView')"
           @gotoStep="(n) => gotoView(n)"
-          v-show="viewName === 'SourceTargetView'"
+          v-show="currentViewName === 'SourceTargetView'"
         />
         <AnalysisView
-          v-if="viewName === 'AnalysisView'"
+          v-if="currentViewName === 'AnalysisView'"
           @gotoStep="(n) => gotoView(n)"
         />
 
         <ProcessingView
-          v-if="viewName === 'ProcessingView'"
+          v-if="currentViewName === 'ProcessingView'"
           @gotoStep="(n) => gotoView(n)"
         />
 

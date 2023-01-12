@@ -1,12 +1,15 @@
 import { createApp } from "vue";
 import App from "./App.vue";
-
+import { createPinia } from 'pinia'
 import "./main.css";
 
 // General Font
 import "vfonts/Lato.css";
 // Monospace Font
 import "vfonts/FiraCode.css";
+
+
+const pinia = createPinia()
 
 window.electronAPI.isPackaged().then((isPackaged) => {
   if (!isPackaged) {
@@ -18,7 +21,10 @@ window.electronAPI.isPackaged().then((isPackaged) => {
     console.info("Adding devtools script tag");
   }
 
-  createApp(App)
+  const app = createApp(App)
+
+  app.use(pinia)
+  app
     .mount("#app")
     .$nextTick(() => {
       postMessage({ payload: "removeLoading" }, "*");

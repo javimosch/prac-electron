@@ -51,6 +51,8 @@ export default {
       mainAction: ref("copy"),
       targetDirectoryStructure: ref("flat"),
       reset,
+
+      currentView:ref('StartView')
     });
 
     state.reset();

@@ -13,7 +13,8 @@
     "paths": {},
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "allowJs": true
+    "allowJs": true,
+    "experimentalDecorators": true,
     //"types": ["naive-ui/volar"]
   },
   "references": [

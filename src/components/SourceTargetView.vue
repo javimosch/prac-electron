@@ -1,15 +1,12 @@
 <template lang="pug">
-.steps
-    StepZeroBar
-    .main
-        SourceFolderList
-        TargetFolderList(v-if="mainAction!=='dedupe'")
-        ExtensionsSelect
-        .buttons
-            BigButton(@click="$emit('gotoStep','StartView')") Back
-            BigButton(:disabled="!canContinue" @click="canContinue &&$emit('clickNext')") Next
-    StepTwoBar
-    StepThreeBar
+Layout
+    SourceFolderList
+    TargetFolderList(v-if="mainAction!=='dedupe'")
+    ExtensionsSelect
+    .buttons
+        BigButton(@click="$emit('gotoStep','StartView')") Back
+        BigButton(:disabled="!canContinue" @click="canContinue &&$emit('clickNext')") Next
+    
 </template>
 <script setup>
 import {computed, inject} from 'vue'
@@ -43,7 +40,7 @@ const canContinue = computed({
         flex-direction: column;
         justify-content: start;
         row-gap:20px;
-        width: calc(100vw - 200px);
+        width: calc(100vw - 50px);
         min-height: calc(100vh - 40px);
     }
 </style>

@@ -4,8 +4,8 @@
         BrandCenter
         .btn-group
             BigButton(@click="selectAction('dedupe')") Dedupe
-            BigButton(@click="selectAction('copy')") Copy
-            BigButton(@click="selectAction('clean')") Clean
+            //BigButton(@click="selectAction('copy')") Copy
+            //BigButton(@click="selectAction('clean')") Clean
 </template>
 
 <script setup>
