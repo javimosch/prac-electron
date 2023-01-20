@@ -1,9 +1,5 @@
 <script setup>
-
 import ProvidePrakContext from "./components/ProvidePrakContext.vue";
-import TargetFolderList from "./components/TargetFolderList.vue";
-
-import StepZero from "./components/StartView.vue";
 import {
   NButton,
   NConfigProvider,
@@ -50,22 +46,22 @@ function gotoView(viewNameParam) {
         :date-locale="dateEnUS"
       >
         <StartView
-          @click="gotoView('SourceTargetView')"
+          @click="gotoView('StepOneView')"
           @gotoStep="(n) => gotoView(n)"
           v-if="currentViewName === 'StartView'"
         />
-        <SourceTargetView
+        <StepOneView
+          @clickNext="gotoView('StepTwoView')"
+          @gotoStep="(n) => gotoView(n)"
+          v-show="currentViewName === 'StepOneView'"
+        />
+        <StepTwoView
           @clickNext="gotoView('AnalysisView')"
           @gotoStep="(n) => gotoView(n)"
-          v-show="currentViewName === 'SourceTargetView'"
+          v-show="currentViewName === 'StepTwoView'"
         />
         <AnalysisView
           v-if="currentViewName === 'AnalysisView'"
-          @gotoStep="(n) => gotoView(n)"
-        />
-
-        <ProcessingView
-          v-if="currentViewName === 'ProcessingView'"
           @gotoStep="(n) => gotoView(n)"
         />
 

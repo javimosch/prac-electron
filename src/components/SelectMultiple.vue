@@ -1,5 +1,5 @@
 <template lang="pug">
-.title(@click="toggleCollapse") 
+//.title(@click="toggleCollapse") 
   span {{props.title}}
   Icon(size="30" color="white")
     ArrowDropDownFilled
@@ -69,17 +69,18 @@ function toggleOption(option) {
   cursor:pointer;
 }
 .options {
-  margin-top: 15px;
   display: flex;
   flex-wrap: wrap;
-  justify-content: left;
+  justify-content: center;
   align-items: center;
-  column-gap: 10px;;
+  column-gap: 10px;
+  padding:10px;
+  background-color: var(--light);
 }
 .text {
   min-width:50px;
   font-size: 20px;
-  border: 2px solid white;
+  border: 0px solid white;
   padding: 5px 15px;
   width: fit-content;
   
@@ -88,8 +89,11 @@ function toggleOption(option) {
   cursor: pointer;
   margin:10px 0px;
   background-color: transparent;
+  background-color: var(--light-dark);
+  color: var(--light);
 }
 .option.selected{
-  background-color: var(--buttons);
+  background-color: white;
+  color:var(--light-dark)
 }
 </style>

@@ -8,9 +8,14 @@ import { PrakStateSymbol } from "@/constants.js";
 const { extensions } = inject(PrakStateSymbol);
 
 const props = defineProps({});
+
+const optionText = {
+  all: 'All file types'
+}
+
 const options = ref(
   ["jpg", "pdf", "png", "git", "tiff", "all"].map((ext) => ({
-    text: ext.toUpperCase(),
+    text: (optionText[ext]||ext).toUpperCase(),
     tooltip: `${ext.toUpperCase()} files`,
     value: ext.toLowerCase(),
   }))

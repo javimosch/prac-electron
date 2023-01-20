@@ -18,12 +18,12 @@ const cssPercent = computed({
 .bar{
     width:100%;
     height:30px;
-    background-color: grey;
+    background-color: var(--light);
 }
 .inner{
     height: 30px;
     width: v-bind(cssPercent);
-    background-color: white;
+    background-color: var(--dark);
     transition: width 2s ease;
 }
 </style>

@@ -98,7 +98,9 @@ let sizeTotal = computed({
 }
 .section.totals {
   margin-top: 20px;
-  background-color: var(--buttons);
+  background-color: var(--light);
+  color:var(--light-dark);
+  
 }
 .section div {
   flex-basis: 25%;

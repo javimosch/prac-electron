@@ -13,13 +13,14 @@
   align-items: center;
   padding: 0px 5px;
   justify-content: flex-end;
+  height: 135px;
 }
 .brand-title {
   font-family: "Aclonica";
   font-weight: normal;
   font-style: normal;
-  font-size: 100px;
-  line-height: 90px;
+  font-size: 50px;
+  
   color: white;
   -webkit-user-select: none; /* Safari */
   -moz-user-select: none; /* Firefox */

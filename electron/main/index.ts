@@ -399,7 +399,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     []
   );
 
-  let hasInvalidCache =
+  let hasInvalidCache = isDedupe ||
     !isAnalysisComplete ||
     configId != computedConfigId ||
     (sourceFiles.length === 0 && uniqueFiles.length === 0);
@@ -700,7 +700,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
   //Analysis complete
   sendEvent({
-    hasAnalysisCache: true,
+    hasAnalysisCache: isDedupe ? false : true,
   });
   //=====
 

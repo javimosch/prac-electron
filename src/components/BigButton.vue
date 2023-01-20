@@ -1,5 +1,5 @@
 <template lang="pug">
-.button(:class="{disabled:disabled, enabled:!disabled}")
+.button(:class="{disabled:disabled, enabled:!disabled, fullWidth: fullWidth}")
     slot
 </template>
 <script setup>
@@ -16,8 +16,18 @@ const props = defineProps({
   disabled:{
     type:Boolean,
     default:false
+  },
+  fullWidth:{
+    type:Boolean,
+    default:false
+  },
+  bgColor:{
+    type:String,
+    default: 'var(--light-dark)'
   }
 });
+
+const bgColor  = computed(()=>props.bgColor)
 
 let computedBorderColor = computed({
   get: () =>
@@ -26,15 +36,15 @@ let computedBorderColor = computed({
 </script>
 <style scoped>
 .button {
-  border: 2px solid v-bind(computedBorderColor);
+  border: 0px solid v-bind(computedBorderColor);
   width: fit-content;
   padding: 5px 10px;
   font-size: 25px;
   text-transform: uppercase;
-  font-weight: 400;
+  font-weight: bold;
   color: v-bind(color);
   text-transform: uppercase;
-  background-color: var(--buttons);
+  background-color: v-bind(bgColor);
 }
 .button.disabled{
     background-color:lightgrey;
@@ -43,5 +53,9 @@ let computedBorderColor = computed({
 .button.enabled:hover {
   opacity: 0.9;
   cursor: pointer;
+}
+.button.fullWidth{
+  width: 100%;
+  text-align: center;
 }
 </style>

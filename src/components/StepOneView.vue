@@ -1,14 +1,14 @@
 <template lang="pug">
 Layout
-    .space-between
+    template(v-slot:stepOne)
         .top
             SourceFoldersSelector
             TargetFolderList(v-if="mainAction!=='dedupe'")
-            ExtensionsSelect
         .buttons
-            BigButton(@click="$emit('gotoStep','StartView')") Back
-            BigButton(:disabled="!canContinue" @click="canContinue &&$emit('clickNext')") Next
-    
+            BigButton(:disabled="!isNextEnabled" 
+            fullWidth
+            @click="isNextEnabled &&$emit('clickNext')") Next
+        
 </template>
 <script setup>
 import {computed, inject, onMounted} from 'vue'
@@ -23,9 +23,7 @@ const {
     mainAction
 } = inject(PrakStateSymbol);
 
-const canContinue = computed({
-    get: ()=> extensions.value.length > 0
-})
+const isNextEnabled = computed(()=>true)
 
 onMounted(()=>{
     brandSubtitle.value="Select source"
@@ -60,6 +58,6 @@ onMounted(()=>{
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    height: 100%;;
+    
     }
 </style>

@@ -11,8 +11,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 2px solid white;
+  border: 0px solid white;
   cursor:pointer;
+  background-color: var(--light);
+  color: var(--light-dark)
 }
 
 </style>

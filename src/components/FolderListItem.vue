@@ -1,12 +1,18 @@
 <template lang="pug">
 .path(@click="emit('remove',fullPath)")
-    img(:src="sourceDiskIcon")
-    p
-        span {{getFolderName(fullPath)}}
-        .separator
-        span {{fullPath}}
+    .path-inner
+      simple-svg( 
+          :src="sourceDiskIcon"
+          fill-class-name="fill"
+          fill="var(--light-dark)"
+          customClassName="svg-maxw-25"
+        )
+      p
+          span {{getFolderName(fullPath)}}
+          .separator
+          span {{fullPath}}
     .close-icon
-        Icon(size="30" color="white")
+        Icon(size="30" color="var(--light-dark)")
           CloseOutlined 
 </template>
 
@@ -31,7 +37,7 @@ const getFolderName = computed(() => {
 });
 
 </script>
-<style scoped>
+<style lang="scss" scoped>
 img{
   max-width:25px;
 }
@@ -41,21 +47,36 @@ img{
   flex-direction: column;
   row-gap: 0px;
 }
-.path {
-  color: white;
-  font-size: 18px;
-  padding: 10px 15px;
-  column-gap: 10px;
+
+.path-inner{
   display: flex;
+  
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
+  column-gap:5px;
 }
+.path {
+  color: var(--light-dark);
+  font-size: 14px;
+  padding: 5px 10px;
+  column-gap: 10px;
+  display:grid;
+  grid-template-columns: 90% 1fr;
+  cursor: pointer;
+  background-color: var(--light);
+  p, span{
+    color: var(--light-dark);
+    word-break: break-all;
+  }
+}
+
 .path:hover .close-icon {
   opacity: 1;
 }
 .close-icon {
   opacity: 0;
+  display:flex;
+  align-items: center;
 }
 
 span{

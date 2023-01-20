@@ -59,15 +59,19 @@ const icon = computed(() => {
   column-gap: 5px;
   justify-content: flex-start;
   align-items: center;
-
+  padding:20px 15px;
   font-size: 28px;
   opacity: 0.6;
   color: white;
   cursor:v-bind(cursor);
+  &.selected{
+    font-weight: bold;
+  }
 }
 .menu-option.selected {
   font-size: 30px;
   opacity:1;
+  background-color: var(--light-grey);
 }
 img {
   padding: 0px 0px;
@@ -75,13 +79,15 @@ img {
   min-width: 60px;
 }
 .text {
+  text-transform: uppercase;
 }
 .number {
-  font-size: 60px;
+  font-size: 80px;
   min-width: 50px;
   text-align: center;
 }
 .text-separator {
   border-bottom: 2px solid white;
 }
+
 </style>

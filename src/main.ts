@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import { createPinia } from 'pinia'
 import "./main.css";
+import VueSimpleSVG from 'vue3-simple-svg'
 
 // General Font
 //import "vfonts/Lato.css";
@@ -22,6 +23,8 @@ window.electronAPI.isPackaged().then((isPackaged) => {
   }
 
   const app = createApp(App)
+
+  app.use(VueSimpleSVG)
 
   app.use(pinia)
   app

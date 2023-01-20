@@ -17,21 +17,22 @@ const props = defineProps({
 </script>
 <style scoped>
 .root {
-    
-    font-size: 25px;
+    font-size: 20px;
     font-weight: 300;
-    border: 2px solid white;
-    color:white;
-    padding: 25px 25px;
+    color:var(--light-dark);
     display: flex;
     flex-direction: column;
     text-align: center;
-    row-gap: 15px;
-    justify-content: space-between;
+    background-color: var(--light);
 }
 .title{
-    border-bottom:2px solid white;
+    border:0;
     font-weight: 400;
+    text-transform: uppercase;
+    color:white;
+    background-color: var(--light-dark);
+    padding:5px 20px;
+    font-size:18px;
 }
 </style>
     

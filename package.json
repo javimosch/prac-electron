@@ -98,6 +98,7 @@
         "sass": "^1.55.0",
         "serve-index": "^1.9.1",
         "sha-anything": "^0.0.2",
-        "shortid": "^2.2.16"
+        "shortid": "^2.2.16",
+        "vue3-simple-svg": "^1.0.0"
     }
 }

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import {ref} from 'vue'
 export const useAppStore = defineStore("app", () => {
-  const currentViewName = ref("StartView");
+  const currentViewName = ref("StepOneView");
 
   const brandSubtitle = ref('')
 

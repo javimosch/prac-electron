@@ -139,7 +139,7 @@ async function executeAnalysis(isAnalysis = false) {
 async function executeMainAction(actionName) {
   mainAction.value = actionName;
   await executeAnalysis(false);
-  emit("gotoStep", "ProcessingView");
+  //emit("gotoStep", "ProcessingView");
 }
 
 let isAnalysisInProgress = computed({
@@ -186,17 +186,34 @@ Layout
   .h-layout
     .left-layout
       
+      .grid-h-50(style="margin-bottom:50px;")
+        div
+          SourceFoldersSelector
+        div
+          ExtensionsSelect
+      
+      AnalysisExtensionsStats(:stats="stats.sourceStats")
+
+      //div
+        label Source
+        AnalysisStat(title="Files found" :value="stats.sourceFileCount")
+        AnalysisStat(title="Size" :value="formatBytes(stats.sourceFilesSizeTotal)")
+        label Target
+        AnalysisStat(title="Files found" :value="43")
+        AnalysisStat(title="Size" :value="1.5")
+    .right-layout
+
       .two-buttons
         .two-buttons
           n-tooltip( trigger="hover"      )
             template(#trigger)
-              BigButton(style="margin-top:15px" borderColor="grey" color="white"
+              BigButton(fullWidth style="margin-top:15px" borderColor="grey" color="white"
                 :disabled="!canRunAnalysis"
                 @click="canRunAnalysis && executeAnalysis(true)"
                 ) 
                   span(v-show="!isAnalysisComplete") Run Analysis
                   span(v-show="isAnalysisComplete") Re-Run Analysis
-                  NSpin(
+                  //NSpin(
                     v-show="isAnalysisInProgress"
                     size="large")
             p Run analysis and collect files information.
@@ -235,40 +252,40 @@ Layout
 
         n-tooltip(v-if="mainAction==='dedupe'" trigger="hover"      )
           template(#trigger)
-            DedupeButton(style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") DEDUPE
+
+            BigButton(
+              bgColor="var(--dark)"
+              fullWidth style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") De-dupe
           p Remove duplicates in the selected directories
         
-      label Source
-      AnalysisExtensionsStats(:stats="stats.sourceStats")
+    
+      ResultInfos(style="margin-top:50px")
 
-      //div
-        label Source
-        AnalysisStat(title="Files found" :value="stats.sourceFileCount")
-        AnalysisStat(title="Size" :value="formatBytes(stats.sourceFilesSizeTotal)")
-        label Target
-        AnalysisStat(title="Files found" :value="43")
-        AnalysisStat(title="Size" :value="1.5")
-    .right-layout(v-if="mainAction!=='dedupe'")
-      label Target  
-      AnalysisExtensionsStats(:stats="stats.targetStats")
+      .copy-wrapper(v-if="mainAction!=='dedupe'")
+        label Target  
+        AnalysisExtensionsStats(:stats="stats.targetStats")
       //n-tooltip( trigger="hover"      )
         template(#trigger)
           NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="()=>{}" :disabled="true") DEDUPE
         p Free space deduping in target directory
       
-  LoadingBar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
-  OverviewText 
+  LoadingBar.loading-bar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
+  //OverviewText 
 </template>
-<style scoped>
-.center {
-  background-color: var(--sand);
-  display: flex;
-  flex-direction: column;
+<style lang="scss" scoped>
+
+.grid-h-50{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  &>div{
+    padding:10px;
+  }
 }
+
 .h-layout {
-  display: flex;
+  display: grid;
   margin-top: 20px;
-  column-gap: 50px;
+  grid-template-columns: 1fr 33.33%;
 }
 .left-layout {
   flex-basis: 50%;
@@ -281,6 +298,8 @@ Layout
   display: flex;
   flex-direction: column;
   row-gap: 5px;
+  justify-content: center;
+    align-items: center;
 }
 .extra-options {
   display: flex;
@@ -292,9 +311,14 @@ label {
 }
 .two-buttons {
   display: flex;
-  column-gap: 5px;
+  row-gap: 5px;
+  flex-direction: column;
 }
-span{
+span {
   white-space: nowrap;
+}
+.loading-bar {
+  margin-top: 50px;
+  margin-bottom: 50px;
 }
 </style>
