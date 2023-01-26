@@ -7,6 +7,7 @@ import pkg from "./package.json";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import path from 'path'
+
 rmSync("dist", { recursive: true, force: true }); // v14.14.0
 
 // https://vitejs.dev/config/

@@ -7,7 +7,6 @@ import * as rra from "recursive-readdir-async";
 //import { customAlphabet } from "nanoid/async";
 //const { customAlphabet } = require("nanoid/async");
 
-
 /*import { MikroORM } from '@mikro-orm/core';
 import config from './mikro-orm-config';
 
@@ -106,8 +105,11 @@ const indexHtml = join(ROOT_PATH.dist, "index.html");
 async function createWindow() {
   const winCfg = cfg.window();
   win = new BrowserWindow({
-    minWidth: 968,
-    minHeight: 768,
+    //minWidth: 968,
+    //minHeight: 768,
+    width: 1280,
+    height: 720,
+    resizable: false,
     title: "Main window",
     icon: join(ROOT_PATH.public, "favicon.ico"),
     webPreferences: {
@@ -140,6 +142,12 @@ async function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("https:")) shell.openExternal(url);
     return { action: "deny" };
+  });
+
+  win.webContents.on("did-finish-load", () => {
+    win?.webContents.setZoomFactor(1);
+    //win.webContents.setVisualZoomLevelLimits(1, 1)
+    //win.webContents.setLayoutZoomLevelLimits(0, 0)
   });
 
   if (isProduction) {
@@ -392,14 +400,15 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   let targetFiles = currCfg.get("targetFiles", []);
   let uniqueFiles = currCfg.get("uniqueFiles", []);
   let targetFilesDupes = currCfg.get("targetFilesDupes", []);
-  
+
   let isAnalysisComplete = currCfg.get("analysis", false);
   let existingFilesInTargetDir: any[] = currCfg.get(
     "existingFilesInTargetDir",
     []
   );
 
-  let hasInvalidCache = isDedupe ||
+  let hasInvalidCache =
+    isDedupe ||
     !isAnalysisComplete ||
     configId != computedConfigId ||
     (sourceFiles.length === 0 && uniqueFiles.length === 0);
@@ -605,18 +614,17 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         `${existingFilesInTargetDir.length} files from source directory already in target directory`
       );
 
+      targetFilesDupes = getDuplicatedFiles(targetFiles);
 
-    targetFilesDupes = getDuplicatedFiles(targetFiles)
-
-    targetFilesDupes.forEach((dupeFile: any) => {
-      let statItem = getStatItem(dupeFile, "targetStats");
-      statItem.dupesCount++;
-      statItem.dupesSize += dupeFile.stats.size;
-      sendEventStats({
-        targetStats: scope.analysisStats.targetStats,
+      targetFilesDupes.forEach((dupeFile: any) => {
+        let statItem = getStatItem(dupeFile, "targetStats");
+        statItem.dupesCount++;
+        statItem.dupesSize += dupeFile.stats.size;
+        sendEventStats({
+          targetStats: scope.analysisStats.targetStats,
+        });
       });
-    });
-    currCfg.set("targetFilesDupes", targetFilesDupes);
+      currCfg.set("targetFilesDupes", targetFilesDupes);
     }
     //=== TARGET DIRECTORY === END =================================
 
@@ -629,7 +637,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         !uniqueFiles.some((ff: any) => ff.uniqueId == f.uniqueId) //TODO use unique identifier
     );*/
 
-    duplicatedFiles = getDuplicatedFiles(sourceFiles)
+    duplicatedFiles = getDuplicatedFiles(sourceFiles);
 
     duplicatedFiles.forEach((dupeFile: any) => {
       let statItem = getStatItem(dupeFile, "sourceStats");
@@ -768,18 +776,15 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
     //COPY OR MOVE MAIN ACTION
     if (["copy", "move"].includes(options.mainAction)) {
-
-      scope.resultStats.originalCount = existingFilesInTargetDir.length
+      scope.resultStats.originalCount = existingFilesInTargetDir.length;
       scope.resultStats.originalSize = existingFilesInTargetDir.reduce(
         (a: Number, f: any) => a + f.stats.size,
         0
       );
 
-     
-
       let processingPercentAnimate = processingPercent;
-    
-      let copiedFiles:any = []
+
+      let copiedFiles: any = [];
 
       await sequential(
         uniqueFiles.map((file: any, index: number) => {
@@ -808,8 +813,10 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
             //DATE MODE
             if (options.targetDirectoryStructure === "date") {
-              let exifDate = await getExifDate(sourcePath)
-              let createdDate = exifDate ? moment(exifDate) : moment(file.stats.ctime);
+              let exifDate = await getExifDate(sourcePath);
+              let createdDate = exifDate
+                ? moment(exifDate)
+                : moment(file.stats.ctime);
               targetBasePath = path.join(
                 targetBasePath,
                 createdDate.format("YYYY"),
@@ -872,11 +879,10 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
               processingPercentAnimate +
                 100 * ((index + 1) / uniqueFiles.length)
             );
-            
 
-            scope.resultStats.copyCount++
-            scope.resultStats.copySize+= file.stats.size;
-            copiedFiles.push(file)
+            scope.resultStats.copyCount++;
+            scope.resultStats.copySize += file.stats.size;
+            copiedFiles.push(file);
 
             sendEvent({
               processing: true,
@@ -888,20 +894,25 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       );
 
       //Sum of size of skipped dupes for each copied file
-      scope.resultStats.dedupeCount = copiedFiles.reduce((a:Number,f:any)=>{
-        let dupesCount = duplicatedFiles.filter((ff:any)=>{
-          let isDupe = ff.md5==f.md5
-          if(isDupe){
-            scope.resultStats.dedupeSize+=ff.stats.size
-          }
-          return isDupe
-        }).length;
-        return a + dupesCount
-      },0)
+      scope.resultStats.dedupeCount = copiedFiles.reduce(
+        (a: Number, f: any) => {
+          let dupesCount = duplicatedFiles.filter((ff: any) => {
+            let isDupe = ff.md5 == f.md5;
+            if (isDupe) {
+              scope.resultStats.dedupeSize += ff.stats.size;
+            }
+            return isDupe;
+          }).length;
+          return a + dupesCount;
+        },
+        0
+      );
 
-      scope.resultStats.finalCount = scope.resultStats.originalCount + copiedFiles.length
-      scope.resultStats.finalSize = scope.resultStats.originalSize + sumFilesSize(copiedFiles)
-      
+      scope.resultStats.finalCount =
+        scope.resultStats.originalCount + copiedFiles.length;
+      scope.resultStats.finalSize =
+        scope.resultStats.originalSize + sumFilesSize(copiedFiles);
+
       consoleLog.info(
         `${mainActionLabelVerb[options.mainAction]} process ended`
       );
@@ -921,17 +932,17 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 });
 
 async function getExifDate(filePath) {
-  let buf 
-  try{
-    buf= await sander.readFile(filePath);
-  }catch(err:any){
-    if(err.stack.includes('no such file')){
-      console.log('Failed to parse exif (not found)', filePath)
-      return null
+  let buf;
+  try {
+    buf = await sander.readFile(filePath);
+  } catch (err: any) {
+    if (err.stack.includes("no such file")) {
+      console.log("Failed to parse exif (not found)", filePath);
+      return null;
     }
   }
-  if(!['.jpeg','.jpg'].some(ext=>filePath.toLowerCase().includes(ext))){
-    return null
+  if (![".jpeg", ".jpg"].some((ext) => filePath.toLowerCase().includes(ext))) {
+    return null;
   }
   try {
     var parser = require("exif-parser").create(buf);
@@ -944,27 +955,26 @@ console.log({
     result
 })*/
     return date;
-  } catch (err:any) {
-    console.log('Failed to parse exif',{
+  } catch (err: any) {
+    console.log("Failed to parse exif", {
       filePath,
-      error:err.stack
-    })
+      error: err.stack,
+    });
     return null;
   }
 }
 
-function getDuplicatedFiles(files:any[]){
-  return files.reduce((a:any,f:any)=>{
-    if(a.some((fff:any)=>fff.md5==f.md5)){
-      return a//already processed
+function getDuplicatedFiles(files: any[]) {
+  return files.reduce((a: any, f: any) => {
+    if (a.some((fff: any) => fff.md5 == f.md5)) {
+      return a; //already processed
     }
-    let dupesArr = files.filter((ff:any)=>ff.md5==f.md5 && ff.uniqueId !== f.uniqueId)
-    a = [
-      ...a,
-      ...dupesArr
-    ]
-    return a
-  },[])
+    let dupesArr = files.filter(
+      (ff: any) => ff.md5 == f.md5 && ff.uniqueId !== f.uniqueId
+    );
+    a = [...a, ...dupesArr];
+    return a;
+  }, []);
 }
 
 async function removeFiles(files: any = [], options: any = {}) {
@@ -1029,7 +1039,6 @@ async function copyOrMoveFile(
   let targetPath = path.join(targetBasePath, targetFileName);
   if (mainAction === "copy") {
     await copyFile(path.join(sourceBasePath, sourceFileName), targetPath);
-    
   }
   if (mainAction === "move") {
     await moveFile(

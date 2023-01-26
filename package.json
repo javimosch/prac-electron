@@ -99,6 +99,7 @@
         "serve-index": "^1.9.1",
         "sha-anything": "^0.0.2",
         "shortid": "^2.2.16",
+        "vite-plugin-tsc-watch": "^2.0.1",
         "vue3-simple-svg": "^1.0.0"
     }
 }
