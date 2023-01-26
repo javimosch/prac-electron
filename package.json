@@ -1,6 +1,6 @@
 {
     "name": "prak-electron",
-    "version": "2.7.1",
+    "version": "2.7.2",
     "main": "dist/electron/main/index.js",
     "description": "Manage your image files duplicates made simple.",
     "author": "arancibiajav@gmail.com",
