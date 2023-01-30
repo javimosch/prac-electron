@@ -4,6 +4,7 @@ import { join } from "path";
 import sequential from "./promiseSequence";
 import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
+import { ConstraintViolationException } from "@mikro-orm/core";
 //import { customAlphabet } from "nanoid/async";
 //const { customAlphabet } = require("nanoid/async");
 
@@ -437,6 +438,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   let processingPercent = 0;
 
   if (!isAnalysisComplete) {
+
+    console.log("Analsis start")
+
     //Analysis start
     scope.analysisStats.sourceStats = [];
     scope.analysisStats.targetStats = [];
@@ -614,7 +618,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         `${existingFilesInTargetDir.length} files from source directory already in target directory`
       );
 
-      targetFilesDupes = getDuplicatedFiles(targetFiles);
+      targetFilesDupes = getDuplicatedFiles(targetFiles, options.removePriority);
 
       targetFilesDupes.forEach((dupeFile: any) => {
         let statItem = getStatItem(dupeFile, "targetStats");
@@ -637,7 +641,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         !uniqueFiles.some((ff: any) => ff.uniqueId == f.uniqueId) //TODO use unique identifier
     );*/
 
-    duplicatedFiles = getDuplicatedFiles(sourceFiles);
+
+    console.log('Calculate dupes in source directory');
+    duplicatedFiles = getDuplicatedFiles(sourceFiles, options.removePriority);
 
     duplicatedFiles.forEach((dupeFile: any) => {
       let statItem = getStatItem(dupeFile, "sourceStats");
@@ -964,15 +970,45 @@ console.log({
   }
 }
 
-function getDuplicatedFiles(files: any[]) {
+function countCharInString(sentence, character) {
+  let count = 0;
+  for (let i = 0; i < sentence.length; i++) {
+    if (sentence[i] === character) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function getDuplicatedFiles(files: any[], removePriority: string) {
+  console.log('getDuplicatedFiles')
   return files.reduce((a: any, f: any) => {
     if (a.some((fff: any) => fff.md5 == f.md5)) {
       return a; //already processed
     }
+    let sameFiles = files.filter((ff:any)=> ff.md5 == f.md5 && ff.uniqueId != f.uniqueId);
+    sameFiles.push(f)
+    let isCloserToRoot = removePriority === 'CLOSER_TO_ROOT'
+    sameFiles = sameFiles.sort((a,b)=>{
+      return countCharInString(a.path, '/') < countCharInString(b.path, '/') ? (isCloserToRoot?-1:1) : (isCloserToRoot?1:-1)
+    })
+    sameFiles.pop() //Keep the latest
+    return [...a, ...sameFiles]
+
+/*
     let dupesArr = files.filter(
-      (ff: any) => ff.md5 == f.md5 && ff.uniqueId !== f.uniqueId
+      (ff: any) => {
+        if(ff.md5 == f.md5 && ff.uniqueId !== f.uniqueId){
+          console.log('DUPE',{
+            f,
+            ff
+          })
+        }
+        return ff.md5 == f.md5 && ff.uniqueId !== f.uniqueId
+      }
     );
     a = [...a, ...dupesArr];
+    */
     return a;
   }, []);
 }

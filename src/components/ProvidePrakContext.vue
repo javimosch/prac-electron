@@ -46,6 +46,8 @@ export default {
 
       hasAnalysisCache:false,
 
+      removePriority: 'CLOSER_TO_ROOT',
+
       isDryRun:ref(false),
 
       mainAction: ref("copy"),

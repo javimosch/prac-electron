@@ -16,6 +16,7 @@ import {
   NPopconfirm,
   NSpin,
   NAlert,
+  NRadio
 } from "naive-ui";
 import { useLoadingBar } from "naive-ui";
 import moment from "moment";
@@ -39,6 +40,7 @@ const {
   processingPercent,
   loggingLevel,
   isCopySettingsAreaVisible,
+  removePriority
 } = inject(PrakStateSymbol);
 
 const stats = ref({
@@ -86,7 +88,7 @@ onMounted(() => {
   });
 
   if (canRunAnalysis) {
-    executeAnalysis(true);
+    //executeAnalysis(true);
   }
 });
 onUnmounted(() => {
@@ -120,9 +122,10 @@ async function executeAnalysis(isAnalysis = false) {
     status.value = "analysis_in_progress";
   }
   await window.electronAPI.analyzeSources([...sourceFolders.value], {
-    isDryRun: isDryRun.value === true,
+    isDryRun: isDryRun.value === true, 
     loggingLevel: loggingLevel.value,
     mainAction: mainAction.value,
+    removePriority: removePriority.value, 
     isAnalysis,
     targetDirectoryStructure: targetDirectoryStructure.value,
     targetDirectory: targetDirectory.value[0],
@@ -177,6 +180,11 @@ let canRunMainAction = computed({
     );
   },
 });
+
+const handleRemovePriorityChange = (e)=>{
+  removePriority.value = e.target.value
+}
+
 </script>
 
 <template lang="pug">
@@ -258,7 +266,9 @@ Layout
               fullWidth style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") De-dupe
           p Remove duplicates in the selected directories
         
-    
+      n-radio(@change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='CLOSER_TO_ROOT'" value="CLOSER_TO_ROOT") Remove the files closer to the root directory.
+      n-radio(@change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='FAR_FROM_ROOT'" value="FAR_FROM_ROOT") Remove the files far from the root directory.
+
       ResultInfos(style="margin-top:50px")
 
       .copy-wrapper(v-if="mainAction!=='dedupe'")
