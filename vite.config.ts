@@ -19,7 +19,10 @@ export default defineConfig({
   },
   plugins: [
     AutoImport({
-      /* options */
+      imports:[
+        'vue'
+      ],
+      dts: true
     }),
     Components({
       /* options */

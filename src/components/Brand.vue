@@ -13,7 +13,6 @@
   align-items: center;
   padding: 0px 5px;
   justify-content: flex-end;
-  height: 135px;
 }
 .brand-title {
   font-family: "Aclonica";

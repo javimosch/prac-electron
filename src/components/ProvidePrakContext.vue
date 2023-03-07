@@ -54,6 +54,7 @@ export default {
       targetDirectoryStructure: ref("flat"),
       reset,
 
+      appVersion: ''
     });
 
     state.reset();

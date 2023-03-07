@@ -16,7 +16,6 @@
     "allowJs": true,
     "experimentalDecorators": true,
     "noImplicitAny": false
-    //"types": ["naive-ui/volar"]
   },
   "references": [
     { "path": "./tsconfig.node.json" }

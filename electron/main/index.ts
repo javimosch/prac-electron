@@ -4,7 +4,11 @@ import { join } from "path";
 import sequential from "./promiseSequence";
 import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
-import { ConstraintViolationException } from "@mikro-orm/core";
+import customActions from './customActions';
+//import { ConstraintViolationException } from "@mikro-orm/core";
+
+
+
 //import { customAlphabet } from "nanoid/async";
 //const { customAlphabet } = require("nanoid/async");
 
@@ -93,7 +97,7 @@ export const ROOT_PATH = {
   dist: join(__dirname, "../.."),
   // /dist or /public
   public: join(__dirname, app.isPackaged ? "../.." : "../../../public"),
-};
+}; 
 
 let win: BrowserWindow | null = null;
 // Here, you can also use other preload
@@ -106,12 +110,13 @@ const indexHtml = join(ROOT_PATH.dist, "index.html");
 async function createWindow() {
   const winCfg = cfg.window();
   win = new BrowserWindow({
-    //minWidth: 968,
-    //minHeight: 768,
+    minWidth: 1280,
+    minHeight: 720,
     width: 1280,
+    maxWidth:1920,
     height: 720,
-    resizable: false,
-    title: "Main window",
+    resizable: true,
+    title: "PRAK",
     icon: join(ROOT_PATH.public, "favicon.ico"),
     webPreferences: {
       preload,
@@ -151,9 +156,9 @@ async function createWindow() {
     //win.webContents.setLayoutZoomLevelLimits(0, 0)
   });
 
-  if (isProduction) {
+  //if (isProduction) {
     win.setMenu(null);
-  }
+  //}
 }
 
 app.whenReady().then(createWindow);
@@ -264,10 +269,18 @@ ipcMain.handle(
   }
 );
 
+
+
 ipcMain.handle("customAction", async (event, options = {}) => {
   consoleLog.log("customAction", {
     options,
   });
+
+  if(customActions[options.name]){
+    let r = await customActions[options.name](options)
+    return r
+  }
+
 
   if (options.name === "cleanAnalysisCache") {
     const currCfg = getCurrCfg(options.name);

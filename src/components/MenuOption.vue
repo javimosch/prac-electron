@@ -59,7 +59,7 @@ const icon = computed(() => {
   column-gap: 5px;
   justify-content: flex-start;
   align-items: center;
-  padding:20px 15px;
+  padding:20px 0px;
   font-size: 28px;
   opacity: 0.6;
   color: white;

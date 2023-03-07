@@ -5,5 +5,10 @@ export const useAppStore = defineStore("app", () => {
 
   const brandSubtitle = ref('')
 
-  return { currentViewName, brandSubtitle };
+  const appVersion = ref('')
+  window.electronAPI.customAction({
+    name: "getAppVersion"
+  }).then(version => appVersion.value=version)
+
+  return { currentViewName, brandSubtitle, appVersion };
 });

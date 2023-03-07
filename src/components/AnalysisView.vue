@@ -1,25 +1,10 @@
 <script setup>
-import LoggingLevels from "./LoggingLevels.vue";
+//import LoggingLevels from "./LoggingLevels.vue";
 import { ref, inject, computed, onMounted, onUnmounted, watch } from "vue";
 import { CleaningServicesOutlined, SettingsTwotone } from "@vicons/material";
 import { Icon } from "@vicons/utils";
-import {
-  NSpace,
-  NButton,
-  NDivider,
-  NForm,
-  NFormItem,
-  NInput,
-  NRadioGroup,
-  NRadioButton,
-  NTooltip,
-  NPopconfirm,
-  NSpin,
-  NAlert,
-  NRadio
-} from "naive-ui";
-import { useLoadingBar } from "naive-ui";
-import moment from "moment";
+
+import  useLoadingBar from "@/composables/loading-bar";
 import { storeToRefs } from "pinia";
 import { useAppStore } from "@/stores/app";
 import { PrakStateSymbol } from "@/constants.js";
@@ -213,9 +198,10 @@ Layout
 
       .two-buttons
         .two-buttons
-          n-tooltip( trigger="hover"      )
-            template(#trigger)
-              BigButton(fullWidth style="margin-top:15px" borderColor="grey" color="white"
+          
+          BigButton(
+                title="Run analysis and collect files information."
+                fullWidth style="margin-top:15px" borderColor="grey" color="white"
                 :disabled="!canRunAnalysis"
                 @click="canRunAnalysis && executeAnalysis(true)"
                 ) 
@@ -224,60 +210,60 @@ Layout
                   //NSpin(
                     v-show="isAnalysisInProgress"
                     size="large")
-            p Run analysis and collect files information.
+          
           div(v-show="hasAnalysisCache")
-            n-tooltip( trigger="hover"      )
-              template(#trigger)
-                BigButton.sm( borderColor="grey" color="white" style="margin-top:15px"
+            
+            BigButton.sm(
+                  title="Clear analysis cache"
+                   borderColor="grey" color="white" style="margin-top:15px"
                 @click="cleanAnalysisCache()"
                 )
                   Icon(size="30" color="white")
                     CleaningServicesOutlined
-              p Clear analysis cache
+            
         
         .two-buttons(v-if="mainAction==='copy'")
-          n-tooltip(trigger="hover")
-            template(#trigger)
-              BigButton(style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('copy')"
+          
+          BigButton(
+                title="Sync/Copy to target (Deduping and skipping existing files)"
+                style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('copy')"
               :disabled="!canRunMainAction"
               ) COPY
-            p Sync/Copy to target (Deduping and skipping existing files)
           
-          n-tooltip( trigger="hover"      )
-            template(#trigger)
-              BigButton.sm( borderColor="grey" color="white" style="margin-top:15px"
+          
+          BigButton.sm(
+                title="Copy settings area"
+                 borderColor="grey" color="white" style="margin-top:15px"
               @click="()=>canRunMainAction ? isCopySettingsAreaVisible=true : null" :disabled="!canRunMainAction"
               )
                 Icon(size="30" color="white")
                   SettingsTwotone
-            p Copy settings area
 
 
-        n-tooltip(v-if="mainAction==='clean'" trigger="hover"      )
-          template(#trigger)
-            BigButton(style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
-          p Free space removing source files present in Target directory and duplicates.
+        //BigButton(
+              title="Free space removing source files present in Target directory and duplicates."
+              style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
+        
 
-        n-tooltip(v-if="mainAction==='dedupe'" trigger="hover"      )
-          template(#trigger)
-
-            BigButton(
+        BigButton(
+              title="Remove duplicates in the selected directories"
               bgColor="var(--dark)"
               fullWidth style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") De-dupe
-          p Remove duplicates in the selected directories
         
-      n-radio(@change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='CLOSER_TO_ROOT'" value="CLOSER_TO_ROOT") Remove the files closer to the root directory.
-      n-radio(@change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='FAR_FROM_ROOT'" value="FAR_FROM_ROOT") Remove the files far from the root directory.
+      div
+        label Remove the files closer to the root directory.
+        input(type="radio" @change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='CLOSER_TO_ROOT'" value="CLOSER_TO_ROOT")
+      
+      div
+        label Remove the files far from the root directory.
+        input(type="radio" @change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='FAR_FROM_ROOT'" value="FAR_FROM_ROOT"
+        ) 
 
       ResultInfos(style="margin-top:50px")
 
       .copy-wrapper(v-if="mainAction!=='dedupe'")
         label Target  
         AnalysisExtensionsStats(:stats="stats.targetStats")
-      //n-tooltip( trigger="hover"      )
-        template(#trigger)
-          NormalButton(style="margin-top:15px" borderColor="grey" color="black" @click="()=>{}" :disabled="true") DEDUPE
-        p Free space deduping in target directory
       
   LoadingBar.loading-bar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
   //OverviewText 

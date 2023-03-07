@@ -5,17 +5,27 @@ Layout
         .buttons
             BigButton(:disabled="!isNextEnabled" 
             fullWidth
-            @click="isNextEnabled &&$emit('clickNext')") Run analysis
+            @click="isNextEnabled &&handleNextClick()") Run analysis
 </template>
 <script setup>
 import {computed, inject} from 'vue'
 import { PrakStateSymbol } from "@/constants.js";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 const {
     extensions
 } = inject(PrakStateSymbol);
 const isNextEnabled = computed({
     get: ()=> extensions.value.length > 0
 })
+
+function handleNextClick(){
+    router.push({
+    name:'Analysis',
+  });
+}
+
 </script>
 <styles lang="scss" scoped>
  .buttons{

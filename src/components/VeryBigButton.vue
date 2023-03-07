@@ -2,7 +2,7 @@
 .VeryBigButton
   slot
 </template>
-<style scoped>
+<style lang="scss" scoped>
 .VeryBigButton {
   font-size: 20px;
   text-transform: uppercase;
@@ -10,11 +10,13 @@
   padding: 10px 30px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   border: 0px solid white;
-  cursor:pointer;
+  cursor: pointer;
   background-color: var(--light);
-  color: var(--light-dark)
+  color: var(--light-dark);
 }
-
+.VeryBigButton:hover {
+  opacity: 0.9;
+}
 </style>

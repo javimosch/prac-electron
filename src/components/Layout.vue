@@ -39,7 +39,7 @@ const { brandSubtitle } = storeToRefs(appStore);
                     slot(name="stepTwo")
                 .slot-three(:class="{bg:hasSlot('stepThree')}")
                     slot(name="stepThree")
-            .slot-default
+            div(:class="{'slot-default':hasSlot('default')}")
                 slot
 </template>
 <style lang="scss" scoped>

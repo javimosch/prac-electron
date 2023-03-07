@@ -7,7 +7,7 @@ Layout
         .buttons
             BigButton(:disabled="!isNextEnabled" 
             fullWidth
-            @click="isNextEnabled &&$emit('clickNext')") Next
+            @click="isNextEnabled && handleNextClick()") Next
         
 </template>
 <script setup>
@@ -15,7 +15,9 @@ import {computed, inject, onMounted} from 'vue'
 import { PrakStateSymbol } from "@/constants.js";
 import {storeToRefs} from 'pinia'
 import { useAppStore } from '@/stores/app'
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const appStore = useAppStore()
 const { brandSubtitle } = storeToRefs(appStore)
 const {
@@ -28,6 +30,12 @@ const isNextEnabled = computed(()=>true)
 onMounted(()=>{
     brandSubtitle.value="Select source"
 })
+
+function handleNextClick(){
+    router.push({
+    name:'StepTwo'
+  });
+}
 
 </script>
 <style scoped>

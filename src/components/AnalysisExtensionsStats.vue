@@ -6,12 +6,13 @@
         div.value Dupes Count
         div.value Dupes size
         div.value Size
-    .section.values(v-for="stat in props.stats")
-        div.ext {{stat.ext.toUpperCase()}}
-        div.value {{stat.count||0}}
-        div.value {{stat.dupesCount||0}}
-        div.value {{formatBytes(stat.dupesSize||0)}}
-        div.value {{formatBytes(stat.size||0)}}
+    .body-scroll
+      .section.values(v-for="stat in props.stats")
+          div.ext {{stat.ext.toUpperCase()}}
+          div.value {{stat.count||0}}
+          div.value {{stat.dupesCount||0}}
+          div.value {{formatBytes(stat.dupesSize||0)}}
+          div.value {{formatBytes(stat.size||0)}}
     .section.totals
         div.ext Total
         div.value {{imagesCountTotal}}
@@ -109,5 +110,9 @@ let sizeTotal = computed({
 .value:not(:last-child), .ext{
   border-right: 1px solid white;
   padding-right:5px;
+}
+.body-scroll{
+  max-height: 200px;
+  overflow: auto;
 }
 </style>

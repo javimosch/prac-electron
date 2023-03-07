@@ -1,20 +1,11 @@
 <template lang="pug">
-//.title(@click="toggleCollapse") 
-  span {{props.title}}
-  Icon(size="30" color="white")
-    ArrowDropDownFilled
 .options(v-show="!collapsed")
   .option(v-for="option in options" @click="toggleOption(option)" :class="{selected:props.modelValue.some(v=>v==option.value)}")
-    n-tooltip( trigger="hover")
-      template(#trigger)
-        .text {{option.text}}
-      p {{option.tooltip}} 
+      .text(:title="option.tooltip") {{option.text}}
+      
 </template>
 <script setup>
-import { NTooltip } from "naive-ui";
 import { ref } from "vue";
-import { Icon } from "@vicons/utils";
-import { ArrowDropDownFilled } from "@vicons/material";
 
 const collapsed = ref(false)
 
