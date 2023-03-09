@@ -23,19 +23,17 @@
   //BigButton(@click="finish") Go Back
 </template>
 <script setup>
-import { inject, computed, onMounted } from "vue";
+import { inject, computed } from "vue";
 import { PrakStateSymbol } from "@/constants.js";
-import { storeToRefs } from "pinia";
-import { useAppStore } from "@/stores/app";
+//import { storeToRefs } from "pinia";
+//import { useAppStore } from "@/stores/app";
 
-const appStore = useAppStore();
-const { brandSubtitle } = storeToRefs(appStore);
+//const appStore = useAppStore();
+//const {  } = storeToRefs(appStore);
 const state = inject(PrakStateSymbol);
 const emit = defineEmits(["gotoStep"]);
 
-onMounted(() => {
-  brandSubtitle.value = "Dedupe files";
-});
+
 
 function finish() {
   //status.value='analysis_required'

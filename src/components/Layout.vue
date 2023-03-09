@@ -18,13 +18,14 @@ const hasStepsSlot = computed(()=>{
 })
 
 const appStore = useAppStore();
-const { brandSubtitle } = storeToRefs(appStore);
+//const {  } = storeToRefs(appStore);
 </script>
 <template lang="pug">
 .layout
-    .brand-wrapper
-        Brand
-        //h1.brand-subtitle {{ brandSubtitle }}
+    .left-wrapper
+        .brand-wrapper
+          router-link(:to="{name:'Home'}")
+            Brand
         .icons-wrapper
             img(:src="icon1")
             img(:src="icon2")
@@ -48,9 +49,8 @@ const { brandSubtitle } = storeToRefs(appStore);
     grid-template-columns: 160px 1fr;
     height: calc(100vh);
 }
-.layout-content,
-.brand-wrapper {
-  align-self: flex-start;
+.layout-content{
+  align-self: center;
 }
 .layout-content {
   height: calc(100vh);
@@ -63,8 +63,16 @@ const { brandSubtitle } = storeToRefs(appStore);
   text-align: right;
 }
 
-.brand-wrapper {
+.brand-wrapper{
+  height: 158px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.left-wrapper {
   height: inherit;
+  align-self: center;
   flex-basis: 15%;
 }
 .icons-wrapper {

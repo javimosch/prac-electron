@@ -1,35 +1,41 @@
 <script setup>
-import {storeToRefs} from 'pinia'
-import { useAppStore } from '@/stores/app'
+//import {storeToRefs} from 'pinia'
+//import { useAppStore } from '@/stores/app'
+import { useRoute, useRouter } from "vue-router";
 
-const appStore = useAppStore()
-const { currentViewName, brandSubtitle } = storeToRefs(appStore)
+const route = useRoute();
+const router = useRouter();
+//const appStore = useAppStore()
+//const {   } = storeToRefs(appStore)
 
 function gotoStepOne(){
-    currentViewName.value = 'StepOneView'
-    brandSubtitle.value="Select source"
+    router.push({
+        name:'StepOne',
+    })
 }
 function gotoStepTwo(){
-    currentViewName.value = 'StepTwoView'
-    brandSubtitle.value="Select source"
+    router.push({
+        name:'StepTwo',
+    })
 }
 function gotoAnalysis(){
-    currentViewName.value = 'AnalysisView'
-    brandSubtitle.value = "Run Analysis";
+    router.push({
+        name:'Analysis',
+    })
 }
 </script>
 <template lang="pug">
 .menu
-    MenuOption(icon="icon1" :number="1" topText="Select" bottomText="Source" :selected="currentViewName==='StepOneView'"
-    @click="gotoStepOne()"
+    MenuOption(icon="icon1" :number="1" topText="Select" bottomText="Source" :selected="route.name==='StepOne'"
+    @click=" gotoStepOne()"
     )
-    MenuOption(icon="icon2" :number="2" topText="Select" bottomText="File types" :selected="currentViewName==='StepTwoView'"
-        @click="gotoStepTwo()"
+    MenuOption(icon="icon2" :number="2" topText="Select" bottomText="File types" :selected="route.name==='StepTwo'"
+        @click=" gotoStepTwo()"
     )
-    MenuOption(icon="icon4" :number="3" topText="Deduplicate" bottomText="Files" :selected="currentViewName==='AnalysisView'" 
-        @click="gotoAnalysis()"
+    MenuOption(icon="icon4" :number="3" topText="Deduplicate" bottomText="Files" :selected="route.name==='Analysis'" 
+        @click=" gotoAnalysis()"
     )
-    //MenuOption(icon="icon4" :number="4" topText="Dedupe" bottomText="Files" :selected="currentViewName==='ProcessingView'" :disabled="true")
+    //MenuOption(icon="icon4" :number="4" topText="Dedupe" bottomText="Files" :selected="route.name==='ProcessingView'" :disabled="true")
 </template>
 <style lang="scss" scoped>
 .menu{

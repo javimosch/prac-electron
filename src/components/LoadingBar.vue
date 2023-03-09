@@ -1,20 +1,40 @@
 <template lang="pug">
 .bar
-    .inner
+    .inner( :style="innerStyle" :class="{increasing:isIncreasing}" )
 </template>
 <script setup>
-import {computed} from 'vue'
+import {computed, watchEffect, ref} from 'vue'
 const props = defineProps({
     percent:{
         type: Number,
         default: 0
     }
 })
+
+const lastPerc = ref(null)
+const isIncreasing = ref(true)
 const cssPercent = computed({
     get:()=>`${props.percent}%`
 })
+const innerStyle = computed(()=>`width: ${props.percent}%`)
+
+
+watchEffect(()=>{
+
+    if(!!lastPerc.value && lastPerc.value > props.percent){
+        isIncreasing.value=false
+    }else{
+        isIncreasing.value=true
+    }
+
+
+
+    lastPerc.value = props.percent
+})
+
+
 </script>
-<style scoped>
+<style lang="scss" scoped>
 .bar{
     width:100%;
     height:30px;
@@ -22,8 +42,10 @@ const cssPercent = computed({
 }
 .inner{
     height: 30px;
-    width: v-bind(cssPercent);
+    
     background-color: var(--dark);
-    transition: width 2s ease;
+    &.increasing{
+        transition: width 2s ease;
+    }
 }
 </style>

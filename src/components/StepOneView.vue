@@ -13,23 +13,19 @@ Layout
 <script setup>
 import {computed, inject, onMounted} from 'vue'
 import { PrakStateSymbol } from "@/constants.js";
-import {storeToRefs} from 'pinia'
-import { useAppStore } from '@/stores/app'
+//import {storeToRefs} from 'pinia'
+//import { useAppStore } from '@/stores/app'
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-const appStore = useAppStore()
-const { brandSubtitle } = storeToRefs(appStore)
+//const appStore = useAppStore()
+//const {  } = storeToRefs(appStore)
 const {
     extensions,
     mainAction
 } = inject(PrakStateSymbol);
 
 const isNextEnabled = computed(()=>true)
-
-onMounted(()=>{
-    brandSubtitle.value="Select source"
-})
 
 function handleNextClick(){
     router.push({

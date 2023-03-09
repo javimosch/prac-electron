@@ -5,12 +5,12 @@ import { CleaningServicesOutlined, SettingsTwotone } from "@vicons/material";
 import { Icon } from "@vicons/utils";
 
 import  useLoadingBar from "@/composables/loading-bar";
-import { storeToRefs } from "pinia";
-import { useAppStore } from "@/stores/app";
+//import { storeToRefs } from "pinia";
+//import { useAppStore } from "@/stores/app";
 import { PrakStateSymbol } from "@/constants.js";
 
-const appStore = useAppStore();
-const { brandSubtitle } = storeToRefs(appStore);
+//const appStore = useAppStore();
+//const {  } = storeToRefs(appStore);
 
 const {
   sourceFolders,
@@ -62,7 +62,7 @@ watch(
 );*/
 let unbindOnEvent;
 onMounted(() => {
-  brandSubtitle.value = "Run Analysis";
+  
 
   unbindOnEvent = window.electronAPI.onAnalysisStat((message) => {
     Object.keys(stats.value).forEach((key) => {
@@ -265,7 +265,7 @@ Layout
         label Target  
         AnalysisExtensionsStats(:stats="stats.targetStats")
       
-  LoadingBar.loading-bar(v-show="processingPercent!==0&&processingPercent!==100" :percent="processingPercent")       
+  LoadingBar.loading-bar( :percent="processingPercent")       
   //OverviewText 
 </template>
 <style lang="scss" scoped>

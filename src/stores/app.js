@@ -1,14 +1,19 @@
 import { defineStore } from "pinia";
 import {ref} from 'vue'
 export const useAppStore = defineStore("app", () => {
-  const currentViewName = ref("StepOneView");
+  
 
-  const brandSubtitle = ref('')
+  
 
   const appVersion = ref('')
   window.electronAPI.customAction({
     name: "getAppVersion"
   }).then(version => appVersion.value=version)
 
-  return { currentViewName, brandSubtitle, appVersion };
+  const appSettingsRef = ref({})
+  trpc.getAppSettings.query().then(appSettings =>appSettingsRef.value=appSettings)
+
+  const versionExpirationRef = ref(null)
+
+  return { appVersion, appSettingsRef, versionExpirationRef };
 });

@@ -1,11 +1,12 @@
 import { app, BrowserWindow, shell, ipcMain } from "electron";
-import { release } from "os";
+import { release } from "os"; 
 import { join } from "path";
 import sequential from "./promiseSequence";
 import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
 import customActions from './customActions';
 //import { ConstraintViolationException } from "@mikro-orm/core";
+
 
 
 
@@ -107,7 +108,7 @@ const preload = join(__dirname, "../preload/index.js");
 const url = `http://${process.env["VITE_DEV_SERVER_HOSTNAME"]}:${process.env["VITE_DEV_SERVER_PORT"]}`;
 const indexHtml = join(ROOT_PATH.dist, "index.html");
 
-async function createWindow() {
+async function createWindow() { 
   const winCfg = cfg.window();
   win = new BrowserWindow({
     minWidth: 1280,
@@ -277,7 +278,7 @@ ipcMain.handle("customAction", async (event, options = {}) => {
   });
 
   if(customActions[options.name]){
-    let r = await customActions[options.name](options)
+    let r = await customActions[options.name].apply(customActions,[options])
     return r
   }
 

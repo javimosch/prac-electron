@@ -1,5 +1,5 @@
 <script>
-// src/components/ProvidePrakContext.js
+// src/components/AppContext.js
 import { provide, reactive, readonly, toRefs, ref } from "vue";
 import { PrakStateSymbol } from "@/constants.js";
 import moment from "moment";

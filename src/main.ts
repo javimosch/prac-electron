@@ -8,6 +8,7 @@ import LoginFormVue from "./components/LoginForm.vue";
 import StepOneView from "./components/StepOneView.vue";
 import StepTwoView from "./components/StepTwoView.vue";
 import AnalysisView from "./components/AnalysisView.vue";
+import CreateAccountView from './components/CreateAccountView.vue'
 // General Font
 //import "vfonts/Lato.css";
 // Monospace Font
@@ -31,10 +32,13 @@ window.electronAPI.isPackaged().then((isPackaged) => {
   // Each route should map to a component.
   // We'll talk about nested routes later.
   const routes = [
-    {name:'Home', path: "/", component: LoginFormVue },
-    {name:"StepOne", path: "/step-one", component: StepOneView },
-    {name:"StepTwo", path: "/step-one", component: StepTwoView },
-    {name:"Analysis", path: "/step-one", component: AnalysisView },
+   // {name:'Home', path: "/", component: LoginFormVue },
+    {name:'Home', path: "/", component: StepOneView },
+    {name:"StepOne", path: "/step-one",  component: StepOneView },
+    {name:"StepTwo", path: "/step-two", component: StepTwoView },
+    {name:"Analysis", path: "/analysis", component: AnalysisView },
+    //{name:"create-account", path: "/create-account", component: CreateAccountView },
+    //{name:'login', path: "/", component: LoginFormVue },
   ];
 
   // 3. Create the router instance and pass the `routes` option

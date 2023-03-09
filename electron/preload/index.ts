@@ -1,5 +1,8 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, shell } = require("electron");
 contextBridge.exposeInMainWorld("electronAPI", {
+  openExternalLink(url:string):void{
+    shell.openExternal(url)
+  },
   openLogsFolder: () => ipcRenderer.invoke("openLogsFolder"),
   isPackaged: () => ipcRenderer.invoke("isPackaged"),
   selectMultipleFolders: () =>

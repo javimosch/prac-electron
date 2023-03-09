@@ -1,18 +1,25 @@
 <script setup>
-import ProvidePrakContext from "./components/ProvidePrakContext.vue";
+import AppContext from "./components/AppContext.vue";
 import {storeToRefs} from 'pinia'
 import { useAppStore } from '@/stores/app'
+import moment from "moment"
+import {computed} from 'vue'
 const appStore = useAppStore()
-const { currentViewName, appVersion } = storeToRefs(appStore)
-function gotoView(viewNameParam) {
-  currentViewName.value = viewNameParam;
-}
+const {  appVersion, versionExpirationRef } = storeToRefs(appStore)
+
+const expirationDateFormatted = computed(()=>versionExpirationRef.value?.expiration ? moment(versionExpirationRef.value?.expiration).format('DD/MM/YYYY') : "")
+const appVersionTooltip = computed(()=>{
+  return `This version expires on ${expirationDateFormatted.value}`
+})
+
 </script>
 <template>
-    <ProvidePrakContext>
+    <AppContext>
       <router-view></router-view>
-      <div class="appVersion">{{ appVersion }}</div>
-    </ProvidePrakContext>
+      <div class="appVersion" :title="appVersionTooltip">{{ appVersion }}</div>
+      <InternetRequiredOverlay />
+      <AppExpiredOverlay />
+    </AppContext>
 </template>
 <style lang="scss" scoped>
 .appVersion{

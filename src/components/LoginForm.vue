@@ -1,51 +1,133 @@
 <template>
   <div class="form-wrapper">
     <form>
-      <div>
+      <div
+      
+      >
         <a href="https://prak.lunardog.com/" target="_blank">
           <Brand />
         </a>
       </div>
 
+      
+      <div
+      v-show="!isUserLogged"
+      >
+        <label>Email</label>
+        <input type="email" v-model="credentials.email"/>
+      </div>
+      <div
+      v-show="!isUserLogged"
+      >
+        <label>Password</label>
+        <input type="password" v-model="credentials.password" />
+      </div>
+      <p
+      v-show="!isUserLogged"
+      >Leave the password input empty to create an account.</p>
+      
       <!--
       <div>
-        <label>Email</label>
-        <input type="email" />
-      </div>
-      <div>
-        <label>Password</label>
-        <input type="password" />
+        No account yet? 
+        <router-link :to="{name:'create-account'}">
+        Create new account
+        </router-link>
       </div>
       -->
-      <div>
-        <VeryBigButton @click="handleClick">Dedupe</VeryBigButton>
+
+      <div
+      v-show="!isUserLogged"
+      >
+        <VeryBigButton @click="handleLoginClick">START</VeryBigButton>
       </div>
-      <div class="preview-wrapper">
-        <div
-          class="preview"
-          title="This version of the application will stop working on 14/05/23. Re-download it after this period of time."
-        >
-          <div>Preview version</div>
-          <div>
-            <Icon size="14" color="white">
-              <WarningFilled />
-            </Icon>
+      
+      <div
+      v-show="isUserLogged"
+      >
+        <VeryBigButton @click="handleDedupeButtonClick">Dedupe</VeryBigButton>
+        <VeryBigButton @click="handleLogout">Logout</VeryBigButton>
+      </div>
+      
+      
+      <div class="errors">
+        <div class="error-message" v-for="(error, index) in errors" :key="index">
+          {{ error }}
           </div>
-        </div>
       </div>
+      
     </form>
   </div>
 </template>
 <script setup>
-import { Icon } from "@vicons/utils";
-import { WarningFilled } from "@vicons/material";
+import {onBeforeMount, ref, reactive} from 'vue'
 import { useRouter } from "vue-router";
+import {isLogged} from '@/api/directus-client'
+import { z } from "zod";
+import {trpc} from '@/api/client'
+import {loginIntoDirectus, directus} from '@/api/directus-client'
+const credentials =  reactive({
+  email:"",
+  password:"",
+})
+const errors = ref([])
+
+const Credentials = z.object({
+  email: z.string().min(1),
+  //password: z.string().min(1),
+});
+
 const router = useRouter();
-function handleClick() {
+function handleDedupeButtonClick() {
   router.push({
     name:'StepOne'
   });
 }
+
+const isUserLogged=  ref(false)
+
+onBeforeMount(async()=>{
+  isUserLogged.value= await isLogged()
+})
+
+async function handleLogout(){
+  await directus.auth.refresh()
+  await directus.auth.logout();
+  isUserLogged.value= await isLogged()
+}
+
+async function handleLoginClick(){
+  try{
+    Credentials.parse(credentials)
+    errors.value=''
+  }catch(err) {
+    errors.value = err.issues.map(issue => `${issue.path.join(', ')} : Field required`)
+    return
+  }
+
+  let hasAssociatedStripePayment = await trpc.hasAssociatedStripePayment.query({
+    email: credentials.email
+  })
+
+  if(!hasAssociatedStripePayment){
+    window.alert("This email is not associated to any purchase")
+  }else{
+
+    if(!credentials.password){
+      errors.value = ['Password: Field required']
+      return
+    }
+
+    let success = await loginIntoDirectus(credentials.email, credentials.password)
+    
+    if(success){
+      isUserLogged.value= await isLogged()
+      //handleDedupeButtonClick()
+    }
+  }
+  
+
+}
+
 </script>
 <style lang="scss" scoped>
 .form-wrapper {
@@ -66,15 +148,5 @@ form {
     row-gap: 10px;
   }
 }
-.preview {
-  display: flex;
-  flex-direction: row;
-  column-gap: 10px;
-}
-.preview-wrapper {
-  margin-top: 15px;
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-}
+
 </style>
