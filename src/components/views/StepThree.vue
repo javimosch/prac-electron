@@ -176,7 +176,7 @@ Layout
   .h-layout
     .left-layout
       
-      .grid-h-50(style="margin-bottom:50px;")
+      .grid-h-50(style="margin-bottom:20px;")
         div
           SourceFoldersSelector
         div
@@ -270,9 +270,7 @@ Layout
 .grid-h-50 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  & > div {
-    padding-right: 10px;
-  }
+  column-gap: 10px;
 }
 
 .h-layout {
@@ -291,9 +289,9 @@ Layout
   display: flex;
   flex-direction: column;
   row-gap: 5px;
-  
+
   align-items: center;
-  padding-left:25px;
+  padding-left: 25px;
   padding-right: 5px;
 }
 .extra-options {
@@ -316,10 +314,10 @@ span {
   margin-top: 50px;
   margin-bottom: 50px;
 }
-.result-infos-wrapper{
-  display:flex;
+.result-infos-wrapper {
+  display: flex;
   justify-content: center;
-  width:300px;
+  width: 300px;
   justify-self: center;
 }
 </style>

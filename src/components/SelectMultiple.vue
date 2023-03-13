@@ -1,15 +1,16 @@
 <template lang="pug">
-.options(v-show="!collapsed")
-  .option(v-for="option in options" @click="toggleOption(option)" :class="{selected:props.modelValue.some(v=>v==option.value)}")
-      .text(:title="option.tooltip") {{option.text}}
-      
+.wrapper
+  .options(v-show="!collapsed")
+    .option(v-for="option in options" @click="toggleOption(option)" :class="{selected:props.modelValue.some(v=>v==option.value)}")
+        .text(:title="option.tooltip") {{option.text}}
+        
 </template>
 <script setup>
 import { ref } from "vue";
 
-const collapsed = ref(false)
+const collapsed = ref(false);
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(["update:modelValue"]);
 const props = defineProps({
   title: {
     type: String,
@@ -21,22 +22,22 @@ const props = defineProps({
       return [];
     },
   },
-  modelValue:{
+  modelValue: {
     type: Array,
-    default:()=>([])
-  }
+    default: () => [],
+  },
 });
 const selected = ref([]);
 
-function toggleCollapse(){
-  collapsed.value=!collapsed.value
+function toggleCollapse() {
+  collapsed.value = !collapsed.value;
 }
 
 function toggleOption(option) {
-  let selected = props.modelValue.map(v=>v)
+  let selected = props.modelValue.map((v) => v);
 
-  if(selected.includes('all')&&option.value!=='all'){
-    selected.length=0
+  if (selected.includes("all") && option.value !== "all") {
+    selected.length = 0;
   }
 
   if (selected.some((item) => item == option.value)) {
@@ -44,47 +45,57 @@ function toggleOption(option) {
       selected.findIndex((item) => item == option.value),
       1
     );
-  }else{
-    selected.push(option.value)
+  } else {
+    selected.push(option.value);
   }
-  emit('update:modelValue', selected);
+  emit("update:modelValue", selected);
 }
 </script>
 <style scoped>
 .title {
   color: white;
   font-size: 20px;
-  display:flex;
+  display: flex;
   justify-content: space-between;
   border-bottom: 1px solid white;
-  cursor:pointer;
+  cursor: pointer;
 }
 .options {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   align-items: center;
   column-gap: 10px;
-  padding:10px;
+  row-gap: 5px;
+  padding: 10px;
+  
+  max-height: 109px;
+  min-height: 109px;
+  overflow: auto;
+  justify-content: space-between;
+  max-width: 281px;
+  margin: 0 auto;
+}
+.wrapper{
   background-color: var(--light);
 }
 .text {
-  min-width:50px;
+  min-width: 50px;
   font-size: 20px;
   border: 0px solid white;
   padding: 5px 15px;
   width: fit-content;
-  
+  display: flex;
+  justify-content: center;
 }
 .option {
   cursor: pointer;
-  margin:10px 0px;
+  max-width: 100px;
   background-color: transparent;
   background-color: var(--light-dark);
   color: var(--light);
 }
-.option.selected{
+.option.selected {
   background-color: white;
-  color:var(--light-dark)
+  color: var(--light-dark);
 }
 </style>

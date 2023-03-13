@@ -10,7 +10,7 @@ const { extensions } = inject(PrakStateSymbol);
 const props = defineProps({});
 
 const optionText = {
-  all: 'All file types'
+  all: 'All'
 }
 
 const options = ref(
