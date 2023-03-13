@@ -1,12 +1,15 @@
 <template lang="pug">
+div
+  .main
+    //.center(v-show="isDedupe||isClean")
+    ResultStat(title="Count" :value="originalCount")
+    ResultStat(title="Size" :value="originalSize")
+    ResultStat(title="Final count" :value="finalCount")
+    ResultStat(title="Final size" :value="finalSize")
+  .main(style="margin-top:15px")
+    ResultStat(title="Reclaimed" :value="reclaimedSize" block)
 
-.main
-  .center(v-show="isDedupe||isClean")
-      ResultStat(title="Original count" :value="originalCount")
-      ResultStat(title="Original size" :value="originalSize")
-      ResultStat(title="Final count" :value="finalCount")
-      ResultStat(title="Final size" :value="finalSize")
-  .center(v-show="isCopy")
+  //.center(v-show="isCopy")
       ResultStat(title="Copy count" :value="copyCount")
       ResultStat(title="Copy size" :value="copySize")
       ResultStat(title="Dedupe count" :value="dedupeCount")
@@ -58,6 +61,10 @@ let originalSize = computed({
   get: () => formatBytes(state.resultStats.value.originalSize || 0),
 });
 
+let reclaimedSize= computed({
+  get:()=> formatBytes((state.resultStats.value.originalSize||0) - (state.resultStats.value.finalSize||0))
+})
+
 let finalCount = computed({
   get: () => state.resultStats.value.finalCount || 0,
 });
@@ -94,10 +101,10 @@ function formatBytes(bytes, decimals = 2) {
 <style scoped>
 .main {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  row-gap: 20px;
+    justify-content: space-between;
+    row-gap: 10px;
+    flex-wrap: wrap;
+    column-gap: 20px;
 }
 .center {
   display: flex;

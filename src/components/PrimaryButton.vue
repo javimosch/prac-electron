@@ -1,63 +1,39 @@
-<template lang="pug">
-.button(:class="{disabled:disabled, enabled:!disabled, fullWidth: fullWidth}")
-    slot
+<template>
+  <Button
+  @click="emit('click')"
+  :color="color"
+  :border-color="borderColor"
+  :disabled="disabled"
+  :full-width="fullWidth"
+  :bg-color="bgColor"
+  style="border:2px solid white;"
+  >
+  <slot></slot>
+  </Button>
 </template>
 <script setup>
-import {computed} from 'vue'
+const emit = defineEmits(['click'])
 const props = defineProps({
-  color: {
+    color: {
     type: String,
     default: "white",
-  },
-  borderColor: {
+    },
+    borderColor: {
     type: String,
     default: null,
-  },
-  disabled:{
+    },
+    disabled:{
     type:Boolean,
     default:false
-  },
-  fullWidth:{
+    },
+    fullWidth:{
     type:Boolean,
     default:false
-  },
-  bgColor:{
+    },
+    bgColor:{
     type:String,
     default: 'var(--light-dark)'
-  }
+    }
 });
 
-const bgColor  = computed(()=>props.bgColor)
-
-let computedBorderColor = computed({
-  get: () =>
-  props.borderColor || props.color
-});
 </script>
-<style scoped>
-.button {
-  border: 0px solid v-bind(computedBorderColor);
-  width: fit-content;
-  padding: 10px 30px;
-  font-family: "Aclonica";
-  font-size: 25px;
-  text-transform: uppercase;
-  font-weight: bold;
-  color: v-bind(color);
-  text-transform: uppercase;
-  background-color: v-bind(bgColor);
-  border:2px solid white;
-}
-.button.disabled{
-    background-color:lightgrey;
-    opacity:0.5;
-}
-.button.enabled:hover {
-  opacity: 0.9;
-  cursor: pointer;
-}
-.button.fullWidth{
-  width: 100%;
-  text-align: center;
-}
-</style>

@@ -32,7 +32,7 @@ function gotoAnalysis(){
     MenuOption(icon="icon2" :number="2" topText="Select" bottomText="File types" :selected="route.name==='StepTwo'"
         @click=" gotoStepTwo()"
     )
-    MenuOption(icon="icon4" :number="3" topText="Deduplicate" bottomText="Files" :selected="route.name==='Analysis'" 
+    MenuOption(icon="icon4" :number="3" topText="Deduplicate" bottomText="Files" :selected="route.name==='StepThree'" 
         @click=" gotoAnalysis()"
     )
     //MenuOption(icon="icon4" :number="4" topText="Dedupe" bottomText="Files" :selected="route.name==='ProcessingView'" :disabled="true")

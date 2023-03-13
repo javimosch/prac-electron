@@ -46,6 +46,7 @@ let computedBorderColor = computed({
     color: v-bind(color);
     text-transform: uppercase;
     background-color: v-bind(bgColor);
+    box-sizing: border-box;
 }
 .button.disabled{
     background-color:lightgrey;

@@ -14,7 +14,7 @@ const optionText = {
 }
 
 const options = ref(
-  ["jpg", "pdf", "png", "git", "tiff", "all"].map((ext) => ({
+  ["all", "jpg", "pdf", "png", "git", "tiff"].map((ext) => ({
     text: (optionText[ext]||ext).toUpperCase(),
     tooltip: `${ext.toUpperCase()} files`,
     value: ext.toLowerCase(),
