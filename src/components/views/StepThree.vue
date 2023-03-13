@@ -4,7 +4,7 @@ import { ref, inject, computed, onMounted, onUnmounted, watch } from "vue";
 import { CleaningServicesOutlined, SettingsTwotone } from "@vicons/material";
 import { Icon } from "@vicons/utils";
 
-import  useLoadingBar from "@/composables/loading-bar";
+import useLoadingBar from "@/composables/loading-bar";
 //import { storeToRefs } from "pinia";
 //import { useAppStore } from "@/stores/app";
 import { PrakStateSymbol } from "@/constants.js";
@@ -25,7 +25,7 @@ const {
   processingPercent,
   loggingLevel,
   isCopySettingsAreaVisible,
-  removePriority
+  removePriority,
 } = inject(PrakStateSymbol);
 
 const stats = ref({
@@ -62,8 +62,6 @@ watch(
 );*/
 let unbindOnEvent;
 onMounted(() => {
-  
-
   unbindOnEvent = window.electronAPI.onAnalysisStat((message) => {
     Object.keys(stats.value).forEach((key) => {
       if (message[key] !== undefined) {
@@ -107,10 +105,10 @@ async function executeAnalysis(isAnalysis = false) {
     status.value = "analysis_in_progress";
   }
   await window.electronAPI.analyzeSources([...sourceFolders.value], {
-    isDryRun: isDryRun.value === true, 
+    isDryRun: isDryRun.value === true,
     loggingLevel: loggingLevel.value,
     mainAction: mainAction.value,
-    removePriority: removePriority.value, 
+    removePriority: removePriority.value,
     isAnalysis,
     targetDirectoryStructure: targetDirectoryStructure.value,
     targetDirectory: targetDirectory.value[0],
@@ -166,10 +164,9 @@ let canRunMainAction = computed({
   },
 });
 
-const handleRemovePriorityChange = (e)=>{
-  removePriority.value = e.target.value
-}
-
+const handleRemovePriorityChange = (e) => {
+  removePriority.value = e.target.value;
+};
 </script>
 
 <template lang="pug">
@@ -196,22 +193,26 @@ Layout
         AnalysisStat(title="Size" :value="1.5")
     .right-layout
 
+      SecondaryButton(
+        title="Scan and collect files information."
+        fullWidth style="margin-top:15px" borderColor="grey" color="white"
+        :disabled="!canRunAnalysis"
+        @click="canRunAnalysis && executeAnalysis(true)"
+        ) 
+          span() Scan
+          //span(v-show="isAnalysisComplete") Re-Scan
+
+      SecondaryButton(
+          title="Remove duplicates in the selected directories"
+          bgColor="var(--dark)"
+          fullWidth style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") De-dupe
+
       .two-buttons
         .two-buttons
           
-          PrimaryButton(
-                title="Run analysis and collect files information."
-                fullWidth style="margin-top:15px" borderColor="grey" color="white"
-                :disabled="!canRunAnalysis"
-                @click="canRunAnalysis && executeAnalysis(true)"
-                ) 
-                  span(v-show="!isAnalysisComplete") Run Analysis
-                  span(v-show="isAnalysisComplete") Re-Run Analysis
-                  //NSpin(
-                    v-show="isAnalysisInProgress"
-                    size="large")
           
-          div(v-show="hasAnalysisCache")
+          
+          //div(v-show="hasAnalysisCache")
             
             PrimaryButton.sm(
                   title="Clear analysis cache"
@@ -245,21 +246,18 @@ Layout
               style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
         
 
-        PrimaryButton(
-              title="Remove duplicates in the selected directories"
-              bgColor="var(--dark)"
-              fullWidth style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") De-dupe
+       
         
       div
-        label Remove the files closer to the root directory.
         input(type="radio" @change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='CLOSER_TO_ROOT'" value="CLOSER_TO_ROOT")
-      
+        label Remove the files closer to the root directory.
       div
-        label Remove the files far from the root directory.
         input(type="radio" @change="handleRemovePriorityChange" name="removePriority" :checked="removePriority==='FAR_FROM_ROOT'" value="FAR_FROM_ROOT"
-        ) 
+        )
+        label Remove the files far from the root directory. 
 
-      ResultInfos(style="margin-top:50px")
+      .result-infos-wrapper
+        ResultInfos(style="margin-top:50px")
 
       .copy-wrapper(v-if="mainAction!=='dedupe'")
         label Target  
@@ -269,12 +267,11 @@ Layout
   //OverviewText 
 </template>
 <style lang="scss" scoped>
-
-.grid-h-50{
-  display:grid;
+.grid-h-50 {
+  display: grid;
   grid-template-columns: 1fr 1fr;
-  &>div{
-    padding:10px;
+  & > div {
+    padding-right: 10px;
   }
 }
 
@@ -294,8 +291,10 @@ Layout
   display: flex;
   flex-direction: column;
   row-gap: 5px;
-  justify-content: center;
-    align-items: center;
+  
+  align-items: center;
+  padding-left:25px;
+  padding-right: 5px;
 }
 .extra-options {
   display: flex;
@@ -316,5 +315,11 @@ span {
 .loading-bar {
   margin-top: 50px;
   margin-bottom: 50px;
+}
+.result-infos-wrapper{
+  display:flex;
+  justify-content: center;
+  width:300px;
+  justify-self: center;
 }
 </style>

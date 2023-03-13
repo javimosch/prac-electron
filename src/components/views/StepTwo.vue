@@ -5,7 +5,7 @@ Layout
         .buttons
             PrimaryButton(:disabled="!isNextEnabled" 
             fullWidth
-            @click="isNextEnabled &&handleNextClick()") Run analysis
+            @click="isNextEnabled &&handleNextClick()") Scan
 </template>
 <script setup>
 import {computed, inject} from 'vue'
@@ -22,7 +22,7 @@ const isNextEnabled = computed({
 
 function handleNextClick(){
     router.push({
-    name:'Analysis',
+    name:'StepThree',
   });
 }
 
