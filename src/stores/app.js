@@ -11,7 +11,8 @@ export const useAppStore = defineStore("app", () => {
   }).then(version => appVersion.value=version)
 
   const appSettingsRef = ref({})
-  trpc.getAppSettings.query().then(appSettings =>appSettingsRef.value=appSettings)
+  //{official_website_url:""}
+  
 
   const versionExpirationRef = ref(null)
 

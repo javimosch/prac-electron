@@ -37,7 +37,7 @@ watchEffect(async () => {
       versionExpirationRef.value = items[0];
       storeVersionExpirationRef.value = versionExpirationRef.value
     }
-    console.log({
+    console.log('getAppVersionExpiration',{
       items,
     });
   }

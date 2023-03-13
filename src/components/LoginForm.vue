@@ -63,7 +63,7 @@ import {onBeforeMount, ref, reactive} from 'vue'
 import { useRouter } from "vue-router";
 import {isLogged} from '@/api/directus-client'
 import { z } from "zod";
-import {trpc} from '@/api/client'
+
 import {loginIntoDirectus, directus} from '@/api/directus-client'
 const credentials =  reactive({
   email:"",
@@ -104,9 +104,9 @@ async function handleLoginClick(){
     return
   }
 
-  let hasAssociatedStripePayment = await trpc.hasAssociatedStripePayment.query({
+  let hasAssociatedStripePayment = false /*await hasAssociatedStripePayment.query({
     email: credentials.email
-  })
+  })*/
 
   if(!hasAssociatedStripePayment){
     window.alert("This email is not associated to any purchase")
