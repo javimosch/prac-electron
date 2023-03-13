@@ -1,6 +1,7 @@
 <template lang="pug">
 .bar
     .inner( :style="innerStyle" :class="{increasing:isIncreasing}" )
+        .text(v-show="props.percent>5") {{ props.percent }} %
 </template>
 <script setup>
 import {computed, watchEffect, ref} from 'vue'
@@ -42,7 +43,9 @@ watchEffect(()=>{
 }
 .inner{
     height: 30px;
-    
+    display:flex;
+    justify-content: center;
+    align-items: center;
     background-color: var(--dark);
     &.increasing{
         transition: width 2s ease;

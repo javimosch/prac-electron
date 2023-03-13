@@ -195,7 +195,7 @@ Layout
 
       SecondaryButton(
         title="Scan and collect files information."
-        fullWidth style="margin-top:15px" borderColor="grey" color="white"
+        fullWidth  borderColor="grey" color="white"
         :disabled="!canRunAnalysis"
         @click="canRunAnalysis && executeAnalysis(true)"
         ) 
@@ -257,7 +257,7 @@ Layout
         label Remove the files far from the root directory. 
 
       .result-infos-wrapper
-        ResultInfos(style="margin-top:50px")
+        ResultInfos(style="margin-top:85px")
 
       .copy-wrapper(v-if="mainAction!=='dedupe'")
         label Target  
