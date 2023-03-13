@@ -50,15 +50,14 @@ img{
 
 .path-inner{
   display: flex;
-  
   justify-content: space-between;
   align-items: center;
-  column-gap:5px;
+  column-gap:10px;
 }
 .path {
   color: var(--light-dark);
-  font-size: 14px;
-  padding: 5px 10px;
+  font-size: 12px;
+  padding: 10px 30px;
   column-gap: 10px;
   display:grid;
   grid-template-columns: 90% 1fr;

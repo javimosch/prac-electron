@@ -24,7 +24,7 @@ function removeFolder(fullPath) {
 VeryBigButton(@click="selectSourceFolders")
   .button-content
     //img(:src="sourceDiskIcon")
-    simple-svg(
+    //simple-svg(
         :src="sourceDiskIcon"
         fill-class-name="fill"
         fill="var(--light-dark)"

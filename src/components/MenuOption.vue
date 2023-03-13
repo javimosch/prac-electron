@@ -57,10 +57,10 @@ const icon = computed(() => {
 .menu-option {
   display: flex;
   column-gap: 5px;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   padding:20px 0px;
-  font-size: 28px;
+  font-size: 20px;
   opacity: 0.6;
   color: white;
   cursor:v-bind(cursor);
@@ -69,7 +69,7 @@ const icon = computed(() => {
   }
 }
 .menu-option.selected {
-  font-size: 30px;
+  font-size: 20px;
   opacity:1;
   background-color: var(--light-grey);
 }
@@ -80,6 +80,9 @@ img {
 }
 .text {
   text-transform: uppercase;
+  row-gap: 5px;
+  display:flex;
+  flex-direction: column;
 }
 .number {
   font-size: 80px;
