@@ -32,7 +32,7 @@ function openOficialWebsiteExternal(){
 
 watchEffect(async () => {
   if (!!appVersion.value) {
-    let items = await getAppVersionExpiration(appVersion.value);
+    let items = await getAppVersionExpiration(appVersion.value) || []
     if (items.length > 0) {
       versionExpirationRef.value = items[0];
       storeVersionExpirationRef.value = versionExpirationRef.value

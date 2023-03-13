@@ -199,7 +199,7 @@ Layout
       .two-buttons
         .two-buttons
           
-          BigButton(
+          PrimaryButton(
                 title="Run analysis and collect files information."
                 fullWidth style="margin-top:15px" borderColor="grey" color="white"
                 :disabled="!canRunAnalysis"
@@ -213,7 +213,7 @@ Layout
           
           div(v-show="hasAnalysisCache")
             
-            BigButton.sm(
+            PrimaryButton.sm(
                   title="Clear analysis cache"
                    borderColor="grey" color="white" style="margin-top:15px"
                 @click="cleanAnalysisCache()"
@@ -224,14 +224,14 @@ Layout
         
         .two-buttons(v-if="mainAction==='copy'")
           
-          BigButton(
+          PrimaryButton(
                 title="Sync/Copy to target (Deduping and skipping existing files)"
                 style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('copy')"
               :disabled="!canRunMainAction"
               ) COPY
           
           
-          BigButton.sm(
+          PrimaryButton.sm(
                 title="Copy settings area"
                  borderColor="grey" color="white" style="margin-top:15px"
               @click="()=>canRunMainAction ? isCopySettingsAreaVisible=true : null" :disabled="!canRunMainAction"
@@ -240,12 +240,12 @@ Layout
                   SettingsTwotone
 
 
-        //BigButton(
+        //PrimaryButton(
               title="Free space removing source files present in Target directory and duplicates."
               style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('clean')" :disabled="!canRunMainAction") CLEAN
         
 
-        BigButton(
+        PrimaryButton(
               title="Remove duplicates in the selected directories"
               bgColor="var(--dark)"
               fullWidth style="margin-top:15px" borderColor="grey" color="white" @click="canRunMainAction&&executeMainAction('dedupe')" :disabled="!canRunMainAction") De-dupe

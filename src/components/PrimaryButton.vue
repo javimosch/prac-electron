@@ -38,13 +38,15 @@ let computedBorderColor = computed({
 .button {
   border: 0px solid v-bind(computedBorderColor);
   width: fit-content;
-  padding: 5px 10px;
+  padding: 10px 30px;
+  font-family: "Aclonica";
   font-size: 25px;
   text-transform: uppercase;
   font-weight: bold;
   color: v-bind(color);
   text-transform: uppercase;
   background-color: v-bind(bgColor);
+  border:2px solid white;
 }
 .button.disabled{
     background-color:lightgrey;

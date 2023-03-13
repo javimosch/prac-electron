@@ -3,36 +3,21 @@ Layout
     template(v-slot:stepOne)
         .top
             SourceFoldersSelector
-            TargetFolderList(v-if="mainAction!=='dedupe'")
+            //TargetFolderList(v-if="mainAction!=='dedupe'")
         .buttons
-            BigButton(:disabled="!isNextEnabled" 
+            SecondaryButton(
             fullWidth
-            @click="isNextEnabled && handleNextClick()") Next
+            :disabled="!isNextEnabled"
+            @click="()=>isNextEnabled&& router.push({name:'StepTwo'})") Next
         
 </template>
 <script setup>
-import {computed, inject, onMounted} from 'vue'
-import { PrakStateSymbol } from "@/constants.js";
-//import {storeToRefs} from 'pinia'
-//import { useAppStore } from '@/stores/app'
+import { inject , computed} from "vue";
 import { useRouter } from "vue-router";
-
+import { PrakStateSymbol } from "@/constants.js";
+const { sourceFolders } = inject(PrakStateSymbol);
 const router = useRouter();
-//const appStore = useAppStore()
-//const {  } = storeToRefs(appStore)
-const {
-    extensions,
-    mainAction
-} = inject(PrakStateSymbol);
-
-const isNextEnabled = computed(()=>true)
-
-function handleNextClick(){
-    router.push({
-    name:'StepTwo'
-  });
-}
-
+const isNextEnabled = computed(()=>sourceFolders.value.length>0)
 </script>
 <style scoped>
     .steps{

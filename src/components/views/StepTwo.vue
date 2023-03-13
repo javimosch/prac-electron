@@ -3,7 +3,7 @@ Layout
     template(v-slot:stepTwo)
         ExtensionsSelect
         .buttons
-            BigButton(:disabled="!isNextEnabled" 
+            PrimaryButton(:disabled="!isNextEnabled" 
             fullWidth
             @click="isNextEnabled &&handleNextClick()") Run analysis
 </template>

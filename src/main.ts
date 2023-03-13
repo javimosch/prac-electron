@@ -5,10 +5,11 @@ import "./main.css";
 import VueSimpleSVG from "vue3-simple-svg";
 import { createRouter, createWebHashHistory } from "vue-router";
 import LoginFormVue from "./components/LoginForm.vue";
-import StepOneView from "./components/StepOneView.vue";
-import StepTwoView from "./components/StepTwoView.vue";
-import AnalysisView from "./components/AnalysisView.vue";
+import StepOne from "./components/views/StepOne.vue";
+import StepTwo from "./components/views/StepTwo.vue";
+import StepThree from "./components/views/StepThree.vue";
 import CreateAccountView from './components/CreateAccountView.vue'
+import Home from './components/views/Home.vue';
 // General Font
 //import "vfonts/Lato.css";
 // Monospace Font
@@ -32,11 +33,10 @@ window.electronAPI.isPackaged().then((isPackaged) => {
   // Each route should map to a component.
   // We'll talk about nested routes later.
   const routes = [
-    {name:'About', path: "/about", component: LoginFormVue },
-    {name:'Home', path: "/", component: StepOneView },
-    {name:"StepOne", path: "/step-one",  component: StepOneView },
-    {name:"StepTwo", path: "/step-two", component: StepTwoView },
-    {name:"Analysis", path: "/analysis", component: AnalysisView },
+    {name:'Home', path: "/", component: Home },
+    {name:"StepOne", path: "/step-one",  component: StepOne },
+    {name:"StepTwo", path: "/step-two", component: StepTwo },
+    {name:"StepThree", path: "/StepThree", component: StepThree },
     //{name:"create-account", path: "/create-account", component: CreateAccountView },
     //{name:'login', path: "/", component: LoginFormVue },
   ];
