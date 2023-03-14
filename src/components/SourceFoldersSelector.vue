@@ -2,7 +2,7 @@
 import sourceCloudIcon from "@/assets/source-cloud.svg";
 import sourceDiskIcon from "@/assets/source-disk.svg";
 import sourceSdCardIcon from "@/assets/source-sd-card.svg";
-import { inject } from "vue";
+import { inject, watchEffect } from "vue";
 import { Icon } from "@vicons/utils";
 import { ArrowDropDownFilled } from "@vicons/material";
 import { PrakStateSymbol } from "@/constants.js";
@@ -18,6 +18,21 @@ function removeFolder(fullPath) {
     1
   );
 }
+
+function onOrderChange(e) {
+  // Remove item from old index
+  let item = sourceFolders.value.splice(e.oldIndex, 1)[0];
+
+  // Insert at new index
+  sourceFolders.value.splice(e.newIndex, 0, item);
+}
+
+watchEffect(()=>{
+  window.electronAPI.customAction({
+    actionName: 'saveSourceItems',
+    sourceItems: [...sourceFolders.value]
+  })
+})
 </script>
 
 <template lang="pug">
@@ -35,7 +50,7 @@ VeryBigButton(@click="selectSourceFolders")
     //img(:src="sourceSdCardIcon")
     Icon(size="30" color="var(--light-dark)")
       ArrowDropDownFilled
-.paths
+.paths(v-sortable @end="onOrderChange")
   FolderListItem(v-for="fullPath in sourceFolders" :key="fullPath" :fullPath="fullPath" @remove="fullPath => removeFolder(fullPath)")
 </template>
 
@@ -52,9 +67,11 @@ VeryBigButton(@click="selectSourceFolders")
   justify-content: flex-start;
   row-gap: 10px;
   margin-top: 20px;
+  max-height: 273px;
+  overflow: auto;
 }
 
-img{
+img {
   max-width: 50px;
 }
 </style>

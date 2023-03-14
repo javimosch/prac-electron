@@ -89,6 +89,7 @@ const appStore = useAppStore();
 }
 .layout-content-inner {
     height: calc(100vh - 168px);
+    overflow: auto;
     &.bg{
       background-color: var(--light-grey);
     }

@@ -1,26 +1,24 @@
 import { app, BrowserWindow, shell, ipcMain } from "electron";
-import { release } from "os"; 
+import { release } from "os";
 import { join } from "path";
 import sequential from "./promiseSequence";
 import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
-import customActions from './customActions';
+import customActions from "./customActions";
 //import { ConstraintViolationException } from "@mikro-orm/core";
-
-
-
-
-//import { customAlphabet } from "nanoid/async";
-//const { customAlphabet } = require("nanoid/async");
-
 /*import { MikroORM } from '@mikro-orm/core';
 import config from './mikro-orm-config';
+
+
 
 const ormStart = async()=>{
   const orm = await MikroORM.init(config);
 }
 ormStart().then(console.log).catch(console.error);
 */
+
+import scope from "./state";
+import { getCurrCfg, saveSourceItems } from "./electron-store";
 
 const consoleLog = require("electron-log");
 consoleLog.catchErrors({
@@ -34,36 +32,10 @@ const md5File = require("md5-file");
 const emptyDir = require("empty-dir");
 const sander = require("sander");
 const isProduction = process.env.NODE_ENV === "production";
-//const nanoid = customAlphabet("123456789", 10);
 const shortid = require("shortid");
 const nanoid = async (len: number) => shortid.generate();
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
-
-const analysisStats: any = {
-  sourceStats: [],
-  targetStats: [],
-};
-const resultStats: any = {
-  freedSize: 0,
-  filesCount: 0,
-  dupesCount: 0,
-
-  originalCount: 0,
-  originalSize: 0,
-  finalCount: 0,
-  finalSize: 0,
-  removedFilesCount: 0,
-
-  copyCount: 0,
-  copySize: 0,
-  dedupeCount: 0,
-  dedupeSize: 0,
-};
-const scope: any = {
-  analysisStats,
-  resultStats,
-};
 
 let logLevel = "normal";
 
@@ -98,7 +70,7 @@ export const ROOT_PATH = {
   dist: join(__dirname, "../.."),
   // /dist or /public
   public: join(__dirname, app.isPackaged ? "../.." : "../../../public"),
-}; 
+};
 
 let win: BrowserWindow | null = null;
 // Here, you can also use other preload
@@ -108,13 +80,13 @@ const preload = join(__dirname, "../preload/index.js");
 const url = `http://${process.env["VITE_DEV_SERVER_HOSTNAME"]}:${process.env["VITE_DEV_SERVER_PORT"]}`;
 const indexHtml = join(ROOT_PATH.dist, "index.html");
 
-async function createWindow() { 
+async function createWindow() {
   const winCfg = cfg.window();
   win = new BrowserWindow({
     minWidth: 1280,
     minHeight: 720,
     width: 1280,
-    maxWidth:1920,
+    maxWidth: 1920,
     height: 720,
     resizable: true,
     title: "PRAK",
@@ -158,7 +130,7 @@ async function createWindow() {
   });
 
   //if (isProduction) {
-    win.setMenu(null);
+  win.setMenu(null);
   //}
 }
 
@@ -241,17 +213,6 @@ ipcMain.handle("selectSingleFolder", async () => {
   return res.filePaths;
 });
 
-function getCurrCfg(configurationName: string = "default"): any {
-  if (!scope.currCfg) {
-    const Store = require("electron-store");
-
-    scope.currCfg = new Store({
-      configurationName: configurationName.split(".")[0],
-    });
-  }
-  return scope.currCfg;
-}
-
 ipcMain.handle("openLogsFolder", async () => {
   shell.showItemInFolder(cfg.resolveUserDataPath("logs/main.log"));
 });
@@ -270,18 +231,19 @@ ipcMain.handle(
   }
 );
 
-
-
 ipcMain.handle("customAction", async (event, options = {}) => {
   consoleLog.log("customAction", {
     options,
+    exists: !!customActions[options.actionName || options.name],
   });
 
-  if(customActions[options.name]){
-    let r = await customActions[options.name].apply(customActions,[options])
-    return r
+  if (customActions[options.actionName || options.name]) {
+    let r = await customActions[options.actionName || options.name].apply(
+      customActions,
+      [options]
+    );
+    return r;
   }
-
 
   if (options.name === "cleanAnalysisCache") {
     const currCfg = getCurrCfg(options.name);
@@ -290,56 +252,7 @@ ipcMain.handle("customAction", async (event, options = {}) => {
       hasAnalysisCache: false,
     });
   }
-
-  if (options.name === "setConfigValues") {
-    const currCfg = getCurrCfg(options.configName);
-    options.values.forEach((valueItem: any) => {
-      console.log("setConfigValues", {
-        valueItem: valueItem,
-      });
-      currCfg.set(valueItem.name, valueItem.value);
-    });
-  }
 });
-
-/**
- * Prepares and retrieves stat item given a read object
- * @param obj
- * @returns
- */
-function getStatItem(obj: any, attr = "sourceStats") {
-  let extension = (obj.extension || "").split(".").join("") || "unknown"; //Fallback to grabing the ext as it is
-  if (!extension) {
-    console.log({
-      obj,
-    });
-    throw new Error("Compute extension fail");
-  }
-
-  let statItem: any = scope.analysisStats[attr].find(
-    (item: any) => item.ext == extension
-  );
-  if (!statItem) {
-    statItem = {
-      ext: extension,
-      count: 0,
-      size: 0,
-      dupesCount: 0,
-      dupesSize: 0,
-    };
-    scope.analysisStats[attr].push(statItem);
-  }
-  return statItem;
-}
-
-function isFilteredFile(file: any, include: Array<any>) {
-  return (
-    (!file.isDirectory && include.length === 0) ||
-    include.some(
-      (str: String) => str.toLowerCase() == file.extension.toLowerCase()
-    )
-  );
-}
 
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   const currCfg = getCurrCfg(options.name);
@@ -452,8 +365,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   let processingPercent = 0;
 
   if (!isAnalysisComplete) {
-
-    console.log("Analsis start")
+    console.log("Analsis start");
 
     //Analysis start
     scope.analysisStats.sourceStats = [];
@@ -632,7 +544,10 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         `${existingFilesInTargetDir.length} files from source directory already in target directory`
       );
 
-      targetFilesDupes = getDuplicatedFiles(targetFiles, options.removePriority);
+      targetFilesDupes = getDuplicatedFiles(
+        targetFiles,
+        options.removePriority
+      );
 
       targetFilesDupes.forEach((dupeFile: any) => {
         let statItem = getStatItem(dupeFile, "targetStats");
@@ -655,8 +570,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         !uniqueFiles.some((ff: any) => ff.uniqueId == f.uniqueId) //TODO use unique identifier
     );*/
 
-
-    console.log('Calculate dupes in source directory');
+    console.log("Calculate dupes in source directory");
     duplicatedFiles = getDuplicatedFiles(sourceFiles, options.removePriority);
 
     duplicatedFiles.forEach((dupeFile: any) => {
@@ -699,14 +613,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
 
-    currCfg.set(
-      "sourceItems",
-      sources.map((sourcePath: string) => {
-        return {
-          fullPath: sourcePath,
-        };
-      })
-    );
+    saveSourceItems(sources, currCfg);
 
     currCfg.set("targetItem", {
       fullPath: options.targetDirectory,
@@ -951,6 +858,67 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   return;
 });
 
+let lastMessageStamp: number | null = null;
+consoleLog.hooks.push((message: any, transport: any) => {
+  if (transport === consoleLog.transports.console) {
+    if (shouldSendConsoleEvent(message.level)) {
+      sendEvent({
+        html: getHTMLParagraph(message.data, message.level),
+      });
+    }
+
+    let prefix = "";
+    if (lastMessageStamp) {
+      prefix = `${msToTime(Date.now() - lastMessageStamp)}`;
+    }
+    lastMessageStamp = Date.now();
+    message.data.unshift(prefix);
+  }
+
+  return message;
+});
+
+/** FUNCTIONS ---------------------------------------------*/
+
+/**
+ * Prepares and retrieves stat item given a read object
+ * @param obj
+ * @returns
+ */
+function getStatItem(obj: any, attr = "sourceStats") {
+  let extension = (obj.extension || "").split(".").join("") || "unknown"; //Fallback to grabing the ext as it is
+  if (!extension) {
+    console.log({
+      obj,
+    });
+    throw new Error("Compute extension fail");
+  }
+
+  let statItem: any = scope.analysisStats[attr].find(
+    (item: any) => item.ext == extension
+  );
+  if (!statItem) {
+    statItem = {
+      ext: extension,
+      count: 0,
+      size: 0,
+      dupesCount: 0,
+      dupesSize: 0,
+    };
+    scope.analysisStats[attr].push(statItem);
+  }
+  return statItem;
+}
+
+function isFilteredFile(file: any, include: Array<any>) {
+  return (
+    (!file.isDirectory && include.length === 0) ||
+    include.some(
+      (str: String) => str.toLowerCase() == file.extension.toLowerCase()
+    )
+  );
+}
+
 async function getExifDate(filePath) {
   let buf;
   try {
@@ -995,21 +963,29 @@ function countCharInString(sentence, character) {
 }
 
 function getDuplicatedFiles(files: any[], removePriority: string) {
-  console.log('getDuplicatedFiles')
+  console.log("getDuplicatedFiles");
   return files.reduce((a: any, f: any) => {
     if (a.some((fff: any) => fff.md5 == f.md5)) {
       return a; //already processed
     }
-    let sameFiles = files.filter((ff:any)=> ff.md5 == f.md5 && ff.uniqueId != f.uniqueId);
-    sameFiles.push(f)
-    let isCloserToRoot = removePriority === 'CLOSER_TO_ROOT'
-    sameFiles = sameFiles.sort((a,b)=>{
-      return countCharInString(a.path, '/') < countCharInString(b.path, '/') ? (isCloserToRoot?-1:1) : (isCloserToRoot?1:-1)
-    })
-    sameFiles.pop() //Keep the latest
-    return [...a, ...sameFiles]
+    let sameFiles = files.filter(
+      (ff: any) => ff.md5 == f.md5 && ff.uniqueId != f.uniqueId
+    );
+    sameFiles.push(f);
+    let isCloserToRoot = removePriority === "CLOSER_TO_ROOT";
+    sameFiles = sameFiles.sort((a, b) => {
+      return countCharInString(a.path, "/") < countCharInString(b.path, "/")
+        ? isCloserToRoot
+          ? -1
+          : 1
+        : isCloserToRoot
+        ? 1
+        : -1;
+    });
+    sameFiles.pop(); //Keep the latest
+    return [...a, ...sameFiles];
 
-/*
+    /*
     let dupesArr = files.filter(
       (ff: any) => {
         if(ff.md5 == f.md5 && ff.uniqueId !== f.uniqueId){
@@ -1257,26 +1233,6 @@ function getHTMLParagraph(text: String, title = "Info") {
   //consoleLog.log(`${title}: ${text}`);
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
 }
-
-let lastMessageStamp: number | null = null;
-consoleLog.hooks.push((message: any, transport: any) => {
-  if (transport === consoleLog.transports.console) {
-    if (shouldSendConsoleEvent(message.level)) {
-      sendEvent({
-        html: getHTMLParagraph(message.data, message.level),
-      });
-    }
-
-    let prefix = "";
-    if (lastMessageStamp) {
-      prefix = `${msToTime(Date.now() - lastMessageStamp)}`;
-    }
-    lastMessageStamp = Date.now();
-    message.data.unshift(prefix);
-  }
-
-  return message;
-});
 
 function msToTime(s: any) {
   var ms = s % 1000;

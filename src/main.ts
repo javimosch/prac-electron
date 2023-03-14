@@ -10,6 +10,9 @@ import StepTwo from "./components/views/StepTwo.vue";
 import StepThree from "./components/views/StepThree.vue";
 import CreateAccountView from './components/CreateAccountView.vue'
 import Home from './components/views/Home.vue';
+import VueSortable from "vue3-sortablejs";
+
+
 // General Font
 //import "vfonts/Lato.css";
 // Monospace Font
@@ -53,7 +56,7 @@ window.electronAPI.isPackaged().then((isPackaged) => {
   const app = createApp(App);
 
   app.use(router);
-
+  app.use(VueSortable);
   app.use(VueSimpleSVG);
 
   app.use(pinia);
