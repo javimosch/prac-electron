@@ -24,7 +24,7 @@ const appVersionTooltip = computed(()=>{
 <style lang="scss" scoped>
 .appVersion{
   position:fixed;
-  bottom:5px;
+  bottom:10px;
   right:5px;
 }
 </style>

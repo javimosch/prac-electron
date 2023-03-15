@@ -11,6 +11,7 @@ import StepThree from "./components/views/StepThree.vue";
 import CreateAccountView from './components/CreateAccountView.vue'
 import Home from './components/views/Home.vue';
 import VueSortable from "vue3-sortablejs";
+import Settings from './components/views/Settings.vue'
 
 
 // General Font
@@ -40,6 +41,7 @@ window.electronAPI.isPackaged().then((isPackaged) => {
     {name:"StepOne", path: "/step-one",  component: StepOne },
     {name:"StepTwo", path: "/step-two", component: StepTwo },
     {name:"StepThree", path: "/StepThree", component: StepThree },
+    {name:"settings", path:'/settings', component:Settings}
     //{name:"create-account", path: "/create-account", component: CreateAccountView },
     //{name:'login', path: "/", component: LoginFormVue },
   ];

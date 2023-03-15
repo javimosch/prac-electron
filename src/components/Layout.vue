@@ -4,6 +4,7 @@ import {useSlots, computed} from 'vue'
 import { storeToRefs } from "pinia";
 import { useAppStore } from "@/stores/app";
 
+
 import icon1 from "@/assets/line-vector-1.svg";
 import icon2 from "@/assets/line-vector-2.svg";
 import icon4 from "@/assets/line-vector-4.svg";
@@ -42,11 +43,14 @@ const appStore = useAppStore();
                     slot(name="stepThree")
             div(:class="{'slot-default':hasSlot('default')}")
                 slot
+    .right-wrapper
+      RightMenu
+
 </template>
 <style lang="scss" scoped>
 .layout {
   display: grid;
-    grid-template-columns: 160px 1fr;
+    grid-template-columns: 80px 1fr 50px;
     height: calc(100vh);
 }
 .layout-content{
@@ -64,6 +68,10 @@ const appStore = useAppStore();
 }
 
 .brand-wrapper{
+  transform: rotate(-90deg);
+    position: relative;
+    left: 0px;
+    top: 10px;
   height: 158px;
     display: flex;
     justify-content: center;
@@ -73,7 +81,7 @@ const appStore = useAppStore();
 .left-wrapper {
   height: inherit;
   align-self: center;
-  flex-basis: 15%;
+  flex-basis: 80px;
 }
 .icons-wrapper {
   height: calc(100% - 179px);
@@ -110,6 +118,10 @@ const appStore = useAppStore();
 }
 .slot-default{
   padding: 20px 15px;
+}
+
+.right-wrapper{
+  padding-bottom: 50px;
 }
 
 </style>

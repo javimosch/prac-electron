@@ -18,7 +18,7 @@
   font-family: "Aclonica";
   font-weight: normal;
   font-style: normal;
-  font-size: 35px;
+  font-size: 40px;
   
   color: white;
   -webkit-user-select: none; /* Safari */

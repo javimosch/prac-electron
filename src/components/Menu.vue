@@ -20,7 +20,7 @@ function gotoStepTwo(){
 }
 function gotoAnalysis(){
     router.push({
-        name:'Analysis',
+        name:'StepThree',
     })
 }
 </script>
