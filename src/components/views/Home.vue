@@ -31,4 +31,6 @@ const router = useRouter();
   display: flex;
   column-gap: 20px;
 }
+
+
 </style>

@@ -30,7 +30,7 @@ body{
     background-color: var(--dark-grey);
     padding: 0px 0px;
     margin:0px;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
 .svg-maxw-25{

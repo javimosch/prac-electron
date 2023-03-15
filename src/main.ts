@@ -37,11 +37,11 @@ window.electronAPI.isPackaged().then((isPackaged) => {
   // Each route should map to a component.
   // We'll talk about nested routes later.
   const routes = [
-    {name:'Home', path: "/", component: Home },
-    {name:"StepOne", path: "/step-one",  component: StepOne },
-    {name:"StepTwo", path: "/step-two", component: StepTwo },
-    {name:"StepThree", path: "/StepThree", component: StepThree },
-    {name:"settings", path:'/settings', component:Settings}
+    {name:'Home', path: "/", component: Home,     meta: { transition: false} },
+    {name:"StepOne", path: "/step-one",  component: StepOne, meta: { transition: false } },
+    {name:"StepTwo", path: "/step-two", component: StepTwo , meta: { transition: false }},
+    {name:"StepThree", path: "/StepThree", component: StepThree , meta: { transition: false }},
+    {name:"settings", path:'/settings', component:Settings , meta: { transition: false}}
     //{name:"create-account", path: "/create-account", component: CreateAccountView },
     //{name:'login', path: "/", component: LoginFormVue },
   ];

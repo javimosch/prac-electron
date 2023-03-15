@@ -43,14 +43,14 @@ const appStore = useAppStore();
                     slot(name="stepThree")
             div(:class="{'slot-default':hasSlot('default')}")
                 slot
-    .right-wrapper
+    .right-wrapper(v-if="false")
       RightMenu
 
 </template>
 <style lang="scss" scoped>
 .layout {
   display: grid;
-    grid-template-columns: 80px 1fr 50px;
+    grid-template-columns: 80px 1fr; /* 50px;*/
     height: calc(100vh);
 }
 .layout-content{
