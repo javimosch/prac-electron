@@ -1,16 +1,19 @@
 {
   "compilerOptions": {
+    
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
-    "importHelpers": true,
+    "importHelpers": false,
     "jsx": "preserve",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": "./",
     "strict": true,
-    "paths": {},
+    "paths": {
+      "@/*": [ "electron/main/*" ]
+    },
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "allowJs": true,

@@ -1,5 +1,8 @@
 <template lang="pug">
 Layout
+    template(v-slot:stepOne)
+      .top
+          SourceFoldersSelector
     template(v-slot:stepTwo)
         ExtensionsSelect
         .buttons

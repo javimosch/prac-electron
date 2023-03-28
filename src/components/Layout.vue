@@ -1,9 +1,8 @@
 <script setup>
 import Menu from "@/components/Menu.vue";
-import {useSlots, computed} from 'vue'
+import { useSlots, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { useAppStore } from "@/stores/app";
-
 
 import icon1 from "@/assets/line-vector-1.svg";
 import icon2 from "@/assets/line-vector-2.svg";
@@ -14,9 +13,9 @@ const hasSlot = (name) => {
   return !!slots[name];
 };
 
-const hasStepsSlot = computed(()=>{
-    return hasSlot('stepOne') || hasSlot('stepTwo') || hasSlot('stepThree');
-})
+const hasStepsSlot = computed(() => {
+  return hasSlot("stepOne") || hasSlot("stepTwo") || hasSlot("stepThree");
+});
 
 const appStore = useAppStore();
 //const {  } = storeToRefs(appStore);
@@ -50,16 +49,16 @@ const appStore = useAppStore();
 <style lang="scss" scoped>
 .layout {
   display: grid;
-    grid-template-columns: 80px 1fr; /* 50px;*/
-    height: calc(100vh);
+  grid-template-columns: 180px 1fr; /* 50px;*/
+  height: calc(100vh);
 }
-.layout-content{
+.layout-content {
   align-self: center;
 }
 .layout-content {
   height: calc(100vh);
-    display: grid;
-    grid-template-rows: 168px 1fr;
+  display: grid;
+  grid-template-rows: 168px 1fr;
 }
 .brand-subtitle {
   padding: 0px;
@@ -67,28 +66,26 @@ const appStore = useAppStore();
   text-align: right;
 }
 
-.brand-wrapper{
-  transform: rotate(-90deg);
-    position: relative;
-    left: 0px;
-    top: 10px;
+.brand-wrapper {
+  position: relative;
+  left: 0px;
+  top: 10px;
   height: 158px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .left-wrapper {
   height: inherit;
   align-self: center;
-  flex-basis: 80px;
+  flex-basis: 180px;
 }
 .icons-wrapper {
   height: calc(100% - 179px);
-  padding-top: 20px;
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: space-evenly;
   align-items: center;
   img {
     max-width: 50px;
@@ -96,32 +93,30 @@ const appStore = useAppStore();
   }
 }
 .layout-content-inner {
-    height: calc(100vh - 168px);
-    overflow: auto;
-    &.bg{
-      background-color: var(--light-grey);
-    }
+  height: calc(100vh - 168px);
+  overflow: auto;
+  &.bg {
+    background-color: var(--light-grey);
+  }
 }
 .layout-step-wrapper {
-    
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  &.enabled{
+  &.enabled {
     height: calc(100vh - 168px);
   }
 }
 .slot-one.bg,
 .slot-two.bg,
-.slot-three.bg{
+.slot-three.bg {
   background-color: var(--light-grey);
   padding: 20px 15px;
 }
-.slot-default{
+.slot-default {
   padding: 20px 15px;
 }
 
-.right-wrapper{
+.right-wrapper {
   padding-bottom: 50px;
 }
-
 </style>

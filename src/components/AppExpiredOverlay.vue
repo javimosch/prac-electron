@@ -16,32 +16,20 @@ import { watchEffect, computed, ref } from "vue";
 import { WarningFilled } from "@vicons/material";
 import { storeToRefs } from "pinia";
 import { Icon } from "@vicons/utils";
-import { getAppVersionExpiration } from "@/api/client";
+
 import moment from "moment";
 import { useAppStore } from "@/stores/app";
 
 const appStore = useAppStore();
-const { appVersion, appSettingsRef, versionExpirationRef:storeVersionExpirationRef } = storeToRefs(appStore);
+const { appVersion, appSettingsRef, versionExpirationRef } = storeToRefs(appStore);
 
-const versionExpirationRef = ref(null);
 const isExpired = computed(() => !!versionExpirationRef.value && moment(versionExpirationRef.value.expiration).isBefore(moment()));
 
 function openOficialWebsiteExternal(){
     window.electronAPI.openExternalLink(appSettingsRef.value.official_website_url)
 }
 
-watchEffect(async () => {
-  if (!!appVersion.value) {
-    let items = await getAppVersionExpiration(appVersion.value) || []
-    if (items.length > 0) {
-      versionExpirationRef.value = items[0];
-      storeVersionExpirationRef.value = versionExpirationRef.value
-    }
-    console.log('getAppVersionExpiration',{
-      items,
-    });
-  }
-});
+
 </script>
 <style lang="scss" scoped>
 .overlay {

@@ -36,25 +36,30 @@ watchEffect(()=>{
 </script>
 
 <template lang="pug">
-VeryBigButton(@click="selectSourceFolders")
-  .button-content
-    //img(:src="sourceDiskIcon")
-    //simple-svg(
-        :src="sourceDiskIcon"
-        fill-class-name="fill"
-        fill="var(--light-dark)"
-        customClassName="svg-maxw-50"
-      )
-    //img(:src="sourceCloudIcon")
-    span Select sources
-    //img(:src="sourceSdCardIcon")
-    Icon(size="30" color="var(--light-dark)")
-      ArrowDropDownFilled
-.paths(v-sortable @end="onOrderChange")
-  FolderListItem(v-for="fullPath in sourceFolders" :key="fullPath" :fullPath="fullPath" @remove="fullPath => removeFolder(fullPath)")
+.wrapper
+  VeryBigButton(@click="selectSourceFolders")
+    .button-content
+      //img(:src="sourceDiskIcon")
+      //simple-svg(
+          :src="sourceDiskIcon"
+          fill-class-name="fill"
+          fill="var(--light-dark)"
+          customClassName="svg-maxw-50"
+        )
+      //img(:src="sourceCloudIcon")
+      span Select sources
+      //img(:src="sourceSdCardIcon")
+      Icon(size="30" color="var(--light-dark)")
+        ArrowDropDownFilled
+  .paths(v-sortable @end="onOrderChange")
+    FolderListItem(v-for="fullPath in sourceFolders" :key="fullPath" :fullPath="fullPath" @remove="fullPath => removeFolder(fullPath)")
 </template>
 
 <style scoped>
+
+.wrapper{
+ 
+}
 .button-content {
   display: flex;
   justify-content: space-between;

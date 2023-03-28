@@ -1,41 +1,29 @@
-import scope from "./state";
+
+let electronStoreConfigs:any = {}
 /**
  * Will get the current configuration stored in plain json
  * @param configurationName
  * @returns
  */
 export function getCurrCfg(configurationName: string = "default"): any {
-  if (!scope.currCfg) {
+  if (!electronStoreConfigs[configurationName]) {
     const Store = require("electron-store");
 
-    scope.currCfg = new Store({
+    electronStoreConfigs[configurationName] = new Store({
       configurationName: configurationName.split(".")[0],
     });
   }
-  return scope.currCfg;
+  return electronStoreConfigs[configurationName]
 }
 
-export function saveSourceItems(sourceItems:any = [], currCfg:any){
-  currCfg.set(
-    "sourceItems",
-    sourceItems.map((sourcePath: string) => {
-      return {
-        fullPath: sourcePath,
-      };
-    })
-  );
-  console.log(`electron-store saveSourceItems ${sourceItems.length}`)
-}
 
 
 
 export function getLocalDB(configurationName:string = ""){
   let electronStoreInstance = getCurrCfg(configurationName)
   return {
-    saveSourceItems(sourceItems:any = []){
-      saveSourceItems(sourceItems, electronStoreInstance)
-    },
-    saveConfigurationProperty
+    set,
+    get
   }
 
   /**
@@ -43,10 +31,14 @@ export function getLocalDB(configurationName:string = ""){
    * @param name 
    * @param value 
    */
-  function saveConfigurationProperty(name:string, value:any){
+  async function set(name:string, value:any){
     electronStoreInstance.set(
       name,
       value
     );
+  }
+
+  async function get(name:string, defaultValue:any = null){
+    return electronStoreInstance.get(name,defaultValue)
   }
 }

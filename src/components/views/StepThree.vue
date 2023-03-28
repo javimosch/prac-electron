@@ -199,8 +199,8 @@ Layout
         :disabled="!canRunAnalysis"
         @click="canRunAnalysis && executeAnalysis(true)"
         ) 
-          span() Scan
-          //span(v-show="isAnalysisComplete") Re-Scan
+          span(v-show="!isAnalysisComplete") Scan
+          span(v-show="isAnalysisComplete") Re-Scan
 
       SecondaryButton(
           title="Remove duplicates in the selected directories"
@@ -257,7 +257,7 @@ Layout
         label Remove the files far from the root directory. 
 
       .result-infos-wrapper
-        ResultInfos(style="margin-top:85px")
+        ResultInfos(style="margin-top:45px")
 
       .copy-wrapper(v-if="mainAction!=='dedupe'")
         label Target  

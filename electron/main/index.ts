@@ -5,11 +5,10 @@ import sequential from "./promiseSequence";
 import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
 import customActions from "./customActions";
+import {processOptions, msToTime} from './helpers'
 //import { ConstraintViolationException } from "@mikro-orm/core";
 /*import { MikroORM } from '@mikro-orm/core';
 import config from './mikro-orm-config';
-
-
 
 const ormStart = async()=>{
   const orm = await MikroORM.init(config);
@@ -18,12 +17,48 @@ ormStart().then(console.log).catch(console.error);
 */
 
 import scope from "./state";
-import { getCurrCfg, saveSourceItems } from "./electron-store";
+import { getLocalDB } from "./electron-store";
 
-const consoleLog = require("electron-log");
-consoleLog.catchErrors({
-  showDialog: true,
-});
+import electronLog from 'electron-log'
+const isJest = process.env.NODE_ENV === "test";
+const consoleLog:any = isJest ? console :  electronLog
+if (!isJest) {
+  consoleLog.catchErrors({
+    showDialog: true,
+  });
+}
+consoleLog.configure = function (options: any) {
+  if (isJest) {
+    return;
+  }
+  let lastMessageStamp: number | null = null;
+  consoleLog.hooks.push((message: any, transport: any) => {
+    if (transport === consoleLog.transports.console) {
+      options.onConsoleMessage(message);
+      let prefix = "";
+      if (lastMessageStamp) {
+        prefix = `${msToTime(Date.now() - lastMessageStamp)}`;
+      }
+      lastMessageStamp = Date.now();
+      message.data.unshift(prefix);
+    }
+
+    return message;
+  });
+};
+
+
+consoleLog.configure({
+  onConsoleMessage(message:any){
+    if (shouldSendConsoleEvent(message.level)) {
+      sendEvent({
+        html: `<p><strong>${message.level}:&nbsp;</strong>${message.data}.</p>`
+      });
+    }
+  }
+})
+
+
 //Object.assign(console, consoleLog.functions);
 const mime = require("mime-types");
 const path = require("path");
@@ -37,7 +72,7 @@ const nanoid = async (len: number) => shortid.generate();
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
 
-let logLevel = "normal";
+
 
 let mainActionLabelVerb: { [index: string]: any } = {
   copy: "Copy",
@@ -220,13 +255,13 @@ ipcMain.handle("openLogsFolder", async () => {
 ipcMain.handle(
   "getConfiguration",
   async (event, configurationName = "default.json") => {
-    const currCfg = getCurrCfg(configurationName);
+    const db = getLocalDB(configurationName);
     return {
-      sourceItems: currCfg.get("sourceItems", []),
-      targetItem: currCfg.get("targetItem", {
+      sourceItems: await db.get("sourceItems", []),
+      targetItem: await db.get("targetItem", {
         fullPath: "",
       }),
-      extensions: currCfg.get("extensions"),
+      extensions: await db.get("extensions"),
     };
   }
 );
@@ -246,97 +281,69 @@ ipcMain.handle("customAction", async (event, options = {}) => {
   }
 
   if (options.name === "cleanAnalysisCache") {
-    const currCfg = getCurrCfg(options.name);
-    currCfg.set("analysis", false);
+    await getLocalDB(options.name).set("analysis", false);
     sendEvent({
       hasAnalysisCache: false,
     });
   }
 });
 
+
+
+function consoleLogDebug(str, obj: any) {
+  consoleLog.debug("analyzeSources", JSON.stringify(obj, null, 4));
+}
+
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
-  const currCfg = getCurrCfg(options.name);
+  
 
-  const isDedupe = options.mainAction === "dedupe";
-  const isCopy = options.mainAction === "copy";
-  const isClean = options.mainAction === "clean";
-  const isAnalysis = options.isAnalysis;
-  const isDryRun = options.isDryRun;
+  const {
+    hasMissingParameters,
+    configurationName,
+    extensions,
+    isDedupe,
+    isCopy,
+    isAnalysis,
+    isDryRun,
+    errors,
+    computedConfigId
+  } = processOptions(sources, options);
 
-  options.include = (options.include || []).map((ext: string) =>
-    ext.toLowerCase()
-  );
-
-  if (options.include.includes(".jpg") && !options.include.includes(".jpeg")) {
-    options.include.push(".jpeg");
+  if(hasMissingParameters){
+    consoleLog.info('Missing parameters',{
+      errors
+    })
+    return false
   }
-  if (options.include.includes(".jpeg") && !options.include.includes(".jpg")) {
-    options.include.push(".jpg");
-  }
 
-  options.include.forEach((ext: string) => {
-    options.include.push(ext.toUpperCase());
-  });
+  const db = getLocalDB(configurationName);
+  await db.set("extensions", extensions);
 
-  let extensions = options.include.map((ext: any) =>
-    (ext.charAt(0) === "." ? ext.substring(1) : ext).toLowerCase()
-  );
-  extensions = extensions.filter(
-    (ext: any, i: Number) => extensions.findIndex((e: any) => e == ext) == i
-  );
-  currCfg.set("extensions", extensions);
-
-  consoleLog.debug(
-    "analyzeSources",
-    JSON.stringify(
-      {
-        sources,
-        options,
-      },
-      null,
-      4
-    )
-  );
-
+  scope.logLevel = options.loggingLevel || scope.logLevel;
+  consoleLogDebug("analyzeSources", { sources, options });
   consoleLog.info("Include", options.include);
   consoleLog.info("Extensions", extensions);
-
-  logLevel = options.loggingLevel || logLevel;
-
-  if (sources.length === 0) {
-    consoleLog.error("Missing source paths");
-    return;
-  }
-
-  if (!options.targetDirectory) {
-    consoleLog.error("Missing target directory");
-    return;
-  }
-
-  console.log("sources", {
+  consoleLog.info("sources", {
     sources,
   });
 
-  let computedConfigId = JSON.stringify({
-    sources,
-    targetDirectory: options.targetDirectory,
-  });
-  let configId = currCfg.get("id", computedConfigId);
+ 
+  let configId = await db.get("id", computedConfigId);
 
-  let duplicatedFiles = currCfg.get("duplicatedFiles", []);
-  let sourceFiles = currCfg.get("sourceFiles", []);
-  let targetFiles = currCfg.get("targetFiles", []);
-  let uniqueFiles = currCfg.get("uniqueFiles", []);
-  let targetFilesDupes = currCfg.get("targetFilesDupes", []);
+  let duplicatedFiles = await db.get("duplicatedFiles", []);
+  let sourceFiles = await db.get("sourceFiles", []);
+  let targetFiles = await db.get("targetFiles", []);
+  let uniqueFiles = await db.get("uniqueFiles", []);
+  let targetFilesDupes = await db.get("targetFilesDupes", []);
 
-  let isAnalysisComplete = currCfg.get("analysis", false);
-  let existingFilesInTargetDir: any[] = currCfg.get(
+  let isAnalysisComplete = await db.get("analysis", false);
+  let existingFilesInTargetDir: any[] =await  db.get(
     "existingFilesInTargetDir",
     []
   );
 
   let hasInvalidCache =
-    isDedupe ||
+  isAnalysis ||
     !isAnalysisComplete ||
     configId != computedConfigId ||
     (sourceFiles.length === 0 && uniqueFiles.length === 0);
@@ -358,9 +365,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       hasAnalysisCache: false,
     });
   }
-
-  //Force analysis
-  //isAnalysisComplete = false;
 
   let processingPercent = 0;
 
@@ -533,7 +537,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       existingFilesInTargetDir = uniqueFiles.filter(
         (f: any) => targetFiles.findIndex((ff: any) => ff.md5 == f.md5) >= 0
       );
-      currCfg.set("existingFilesInTargetDir", existingFilesInTargetDir);
+      await db.set("existingFilesInTargetDir", existingFilesInTargetDir);
 
       //filter out existing files in target dir
       uniqueFiles = uniqueFiles.filter((f: any, i: Number) => {
@@ -557,7 +561,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
           targetStats: scope.analysisStats.targetStats,
         });
       });
-      currCfg.set("targetFilesDupes", targetFilesDupes);
+      await db.set("targetFilesDupes", targetFilesDupes);
     }
     //=== TARGET DIRECTORY === END =================================
 
@@ -613,20 +617,24 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
 
-    saveSourceItems(sources, currCfg);
+    await db.set('sourceItems', sources.map((sourcePath: string) => {
+      return {
+        fullPath: sourcePath,
+      };
+    }));
 
-    currCfg.set("targetItem", {
+    await db.set("targetItem", {
       fullPath: options.targetDirectory,
     });
     isAnalysisComplete = true;
-    currCfg.set("analysis", isAnalysisComplete);
-    currCfg.set("targetFiles", targetFiles);
-    currCfg.set("sourceFiles", sourceFiles);
-    currCfg.set("uniqueFiles", uniqueFiles);
-    currCfg.set("duplicatedFiles", duplicatedFiles);
-    currCfg.set("timestamp", moment().toDate().getTime());
-    currCfg.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
-    currCfg.set("id", configId);
+    await db.set("analysis", isAnalysisComplete);
+    await db.set("targetFiles", targetFiles);
+    await db.set("sourceFiles", sourceFiles);
+    await db.set("uniqueFiles", uniqueFiles);
+    await db.set("duplicatedFiles", duplicatedFiles);
+    await db.set("timestamp", moment().toDate().getTime());
+    await db.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
+    await db.set("id", configId);
     consoleLog.log("Analysis successful", configId);
   } else {
     consoleLog.info("Restoring analysis");
@@ -858,25 +866,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   return;
 });
 
-let lastMessageStamp: number | null = null;
-consoleLog.hooks.push((message: any, transport: any) => {
-  if (transport === consoleLog.transports.console) {
-    if (shouldSendConsoleEvent(message.level)) {
-      sendEvent({
-        html: getHTMLParagraph(message.data, message.level),
-      });
-    }
 
-    let prefix = "";
-    if (lastMessageStamp) {
-      prefix = `${msToTime(Date.now() - lastMessageStamp)}`;
-    }
-    lastMessageStamp = Date.now();
-    message.data.unshift(prefix);
-  }
-
-  return message;
-});
 
 /** FUNCTIONS ---------------------------------------------*/
 
@@ -1106,6 +1096,22 @@ async function moveFile(
   );
 }
 
+function shouldSendConsoleEvent(level: string) {
+  if (["error"].includes(level) && scope.logLevel === "error") {
+    return true;
+  }
+  if (["error", "warn", "info"].includes(level) && scope.logLevel === "normal") {
+    return true;
+  }
+  if (
+    ["error", "warn", "info", "verbose"].includes(level) &&
+    scope.logLevel === "verbose"
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function sendEvent(props: any) {
   win?.webContents.send("event", props);
 }
@@ -1234,29 +1240,6 @@ function getHTMLParagraph(text: String, title = "Info") {
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
 }
 
-function msToTime(s: any) {
-  var ms = s % 1000;
-  s = (s - ms) / 1000;
-  var secs = s % 60;
-  s = (s - secs) / 60;
-  var mins = s % 60;
-  var hrs = (s - mins) / 60;
 
-  return hrs + ":" + mins + ":" + secs + "." + ms;
-}
 
-function shouldSendConsoleEvent(level: string) {
-  if (["error"].includes(level) && logLevel === "error") {
-    return true;
-  }
-  if (["error", "warn", "info"].includes(level) && logLevel === "normal") {
-    return true;
-  }
-  if (
-    ["error", "warn", "info", "verbose"].includes(level) &&
-    logLevel === "verbose"
-  ) {
-    return true;
-  }
-  return false;
-}
+

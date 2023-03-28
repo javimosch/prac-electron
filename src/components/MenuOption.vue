@@ -60,7 +60,7 @@ const icon = computed(() => {
   justify-content: center;
   align-items: center;
   padding:20px 0px;
-  font-size: 20px;
+  font-size: 15px;
   opacity: 0.6;
   color: white;
   cursor:v-bind(cursor);
@@ -69,7 +69,7 @@ const icon = computed(() => {
   }
 }
 .menu-option.selected {
-  font-size: 20px;
+  
   opacity:1;
   background-color: var(--light-grey);
 }
@@ -85,7 +85,7 @@ img {
   flex-direction: column;
 }
 .number {
-  font-size: 80px;
+  font-size: 40px;
   min-width: 50px;
   text-align: center;
 }

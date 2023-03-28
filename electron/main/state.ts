@@ -19,9 +19,15 @@ const resultStats: any = {
   dedupeSize: 0,
 };
 
-const scope: any = {
+const scope: {
+  logLevel:string,
+  analysisStats: any,
+  resultStats: any,
+} = {
   analysisStats,
   resultStats,
+
+  logLevel:"normal"
 };
 
 export default scope;

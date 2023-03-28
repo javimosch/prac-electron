@@ -77,10 +77,11 @@ function toggleOption(option) {
 }
 .wrapper{
   background-color: var(--light);
+  min-height: 143px;
 }
 .text {
   min-width: 50px;
-  font-size: 20px;
+  font-size: 1rem;
   border: 0px solid white;
   padding: 5px 15px;
   width: fit-content;

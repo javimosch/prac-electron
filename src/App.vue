@@ -4,9 +4,7 @@ import { storeToRefs } from "pinia";
 import { useAppStore } from "@/stores/app";
 import moment from "moment";
 import { computed } from "vue";
-import { useRoute } from "vue-router";
 
-const route = useRoute();
 const appStore = useAppStore();
 const { appVersion, versionExpirationRef } = storeToRefs(appStore);
 
