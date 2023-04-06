@@ -12,9 +12,58 @@ const props = defineProps({});
 const optionText = {
   all: 'All'
 }
+ 
+let extData = {
+  "extensions": [
+    "all", "jpg", "png", "gif", "tiff",
+    ".3fr",
+    ".ari",
+    ".arw",
+    ".bay",
+    ".braw",
+    ".crw",
+    ".cr2",
+    ".cr3",
+    ".cap",
+    ".data",
+    ".dcs",
+    ".dcr",
+    ".dng",
+    ".drf",
+    ".eip",
+    ".erf",
+    ".fff",
+    ".gpr",
+    ".iiq",
+    ".k25",
+    ".kdc",
+    ".mdc",
+    ".mef",
+    ".mos",
+    ".mrw",
+    ".nef",
+    ".nrw",
+    ".obm",
+    ".orf",
+    ".pef",
+    ".ptx",
+    ".pxn",
+    ".r3d",
+    ".raf",
+    ".raw",
+    ".rwl",
+    ".rw2",
+    ".rwz",
+    ".sr2",
+    ".srf",
+    ".srw",
+    ".tif",
+    ".x3f"
+  ]
+}
 
 const options = ref(
-  ["all", "jpg", "pdf", "png", "git", "tiff"].map((ext) => ({
+  extData.extensions.map((ext) => ({
     text: (optionText[ext]||ext).toUpperCase(),
     tooltip: `${ext.toUpperCase()} files`,
     value: ext.toLowerCase(),

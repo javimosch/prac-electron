@@ -74,7 +74,7 @@ export default {
       conf,
     });
     if (conf.sourceItems.length > 0) {
-      this.state.sourceFolders = [...conf.sourceItems.map((s) => s.fullPath)];
+      this.state.sourceFolders = [...conf.sourceItems.map((s) => s.fullPath)].filter(s=>!!s);
       
     }
     if(conf.targetItem){
