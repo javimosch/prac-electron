@@ -6,15 +6,7 @@ import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
 import customActions from "./customActions";
 import {processOptions, msToTime} from './helpers'
-//import { ConstraintViolationException } from "@mikro-orm/core";
-/*import { MikroORM } from '@mikro-orm/core';
-import config from './mikro-orm-config';
 
-const ormStart = async()=>{
-  const orm = await MikroORM.init(config);
-}
-ormStart().then(console.log).catch(console.error);
-*/
 
 import scope from "./state";
 import { getLocalDB } from "./electron-store";
