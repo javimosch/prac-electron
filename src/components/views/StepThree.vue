@@ -3,7 +3,7 @@
 import { ref, inject, computed, onMounted, onUnmounted, watch } from "vue";
 import { CleaningServicesOutlined, SettingsTwotone } from "@vicons/material";
 import { Icon } from "@vicons/utils";
-
+import * as analytics from "@/analytics.js";
 import useLoadingBar from "@/composables/loading-bar";
 //import { storeToRefs } from "pinia";
 //import { useAppStore } from "@/stores/app";
@@ -104,7 +104,8 @@ async function executeAnalysis(isAnalysis = false) {
   if (isAnalysis) {
     status.value = "analysis_in_progress";
   }
-  await window.electronAPI.analyzeSources([...sourceFolders.value], {
+
+  let options = {
     isDryRun: isDryRun.value === true,
     loggingLevel: loggingLevel.value,
     mainAction: mainAction.value,
@@ -113,7 +114,17 @@ async function executeAnalysis(isAnalysis = false) {
     targetDirectoryStructure: targetDirectoryStructure.value,
     targetDirectory: targetDirectory.value[0],
     include: normalizeExtensions(extensions),
+  };
+
+  await window.electronAPI.analyzeSources([...sourceFolders.value], options);
+
+  
+  analytics.trackAction("execute", {
+    type: isAnalysis ? "scan" : options.mainAction,
+    options,
+    stats:{...stats.value}
   });
+
   isLoading.value = false;
   if (isAnalysis) {
     status.value = "analysis_complete";
@@ -320,5 +331,4 @@ span {
   width: 300px;
   justify-self: center;
 }
-
 </style>

@@ -3,7 +3,7 @@ SelectMultiple(title="Camera's image raw file selection" :options="options" v-mo
 </template>
 <script setup>
 import { ref, inject, watch } from "vue";
-
+import * as analytics from '@/analytics.js'
 import { PrakStateSymbol } from "@/constants.js";
 const { extensions } = inject(PrakStateSymbol);
 
@@ -86,6 +86,11 @@ watch(
     val = val.filter(
       (ext, i) => extensions.value.findIndex((e) => e == ext) == i
     );
+
+    analytics.trackAction('extensions_select',{
+      type:'select',
+      extensions: [...val]
+    })
 
     window.electronAPI.customAction({
       name: "setConfigValues",

@@ -12,7 +12,7 @@ import CreateAccountView from './components/CreateAccountView.vue'
 import Home from './components/views/Home.vue';
 import VueSortable from "vue3-sortablejs";
 import Settings from './components/views/Settings.vue'
-
+import * as analytics from './analytics.js'
 
 // General Font
 //import "vfonts/Lato.css";
@@ -54,6 +54,12 @@ window.electronAPI.isPackaged().then((isPackaged) => {
     history: createWebHashHistory(),
     routes, // short for `routes: routes`
   });
+
+  // 5. Listen for route changes
+router.afterEach((to, from) => {
+  // 6. Call the trackPage function after each route change
+  analytics.trackView(to.path);
+});
 
   const app = createApp(App);
 
