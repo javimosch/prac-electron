@@ -11,7 +11,7 @@
     "scripts": {
         "dev": "VITE_DEV_SERVER_URL=localhost vite",
         "build": "cross-env NODE_ENV=production vue-tsc --noEmit && vite build && electron-builder",
-        "build:docker": "npm ci && npx modclean --run && cross-env NODE_ENV=production vite build && electron-builder -d",
+        "build:docker": "npm ci && npx modclean --run && cross-env NODE_ENV=production vite build && electron-builder",
         "release": "git push origin master && git push gh master:main",
         "release:mayor": "npx json-bump package.json --mayor && git add package.json && git commit -m 'Bump version' && git push origin master && git push gh master:main",
         "release:minor": "npx json-bump package.json --minor && git add package.json && git commit -m 'Bump version' && git push origin master && git push gh master:main",
