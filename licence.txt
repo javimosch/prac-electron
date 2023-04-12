@@ -1,0 +1,51 @@
+END USER LICENSE AGREEMENT FOR PRAK
+
+This End User License Agreement ("EULA") is a legal agreement between you (either an individual or a single entity) and Lunardog for the software product Prak (the "Software"). By installing, copying, or otherwise using the Software, you agree to be bound by the terms of this EULA.
+
+1. GRANT OF LICENSE
+
+Lunardog grants you the non-exclusive, non-transferable, revocable, and limited right to install and use the Software. This license is for the sole purpose of enabling you to use the Software in accordance with the terms of this EULA.
+
+2. RESTRICTIONS AND LIMITATIONS
+
+You may not rent, lease, lend, sublicense, distribute, or otherwise transfer the Software or any of its components, or allow any third party to use the Software. You may not modify, adapt, or create derivative works of the Software. You may not reverse engineer, decompile, disassemble, or otherwise attempt to discover the source code of the Software. You may not use the Software for any commercial purpose or in any manner not authorized by this EULA.
+
+3. OWNERSHIP
+
+The Software is owned and copyrighted by Lunardog. Your purchase of the Software entitles you to own the Software for life and receive updates for one year.
+
+4. UPDATES
+
+Lunardog may from time to time update or modify the Software. These updates may be subject to additional terms and conditions.
+
+5. MONEY BACK GUARANTEE
+
+Lunardog offers a money-back guarantee if the Software does not work with your computer.
+
+6. TERMINATION
+
+This EULA is effective until terminated. Your rights under this EULA will terminate automatically without notice from Lunardog if you fail to comply with any term(s) of this EULA. Upon the termination of this EULA, you shall cease all use of the Software and destroy all copies, full or partial, of the Software.
+
+7. USE
+
+The Software may be used for any personal or commercial purpose, subject to the restrictions and limitations set forth in this EULA.
+
+8. REDISTRIBUTION
+
+You may not redistribute the Software.
+
+9. WARRANTY
+
+Lunardog makes no express or implied warranties, including any warranty of merchantability and fitness for a particular purpose.
+
+10. LEGAL DISPUTES
+
+Lunardog is fully responsible for any legal disputes arising from usage of the Software.
+
+11. GOVERNING LAW
+
+This EULA shall be governed by the laws of the United Kingdom.
+
+12. ACCEPTANCE OF THE EULA
+
+You acknowledge that you have read this EULA, understand it, and agree to be bound by its terms and conditions. You acknowledge that you have the authority to enter into this EULA.

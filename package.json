@@ -1,11 +1,11 @@
 {
-    "name": "prak-electron",
+    "name": "prak-photo",
     "version": "2.10.12",
     "main": "dist/electron/main/index.js",
-    "description": "Manage your image files duplicates made simple.",
+    "description": "Advanced file deduplication software",
     "author": "arancibiajav@gmail.com",
     "email": "arancibiajav@gmail.com",
-    "license": "MIT",
+    "license": "PROPIETARY",
     "homepage": "https://prak.lunardog.com/",
     "private": true,
     "scripts": {
@@ -23,6 +23,7 @@
     },
     "build": {
         "appId": "com.lunardog.prakelectron",
+        "productName": "Prak Photo",
         "asar": true,
         "win": {
             "icon": "./src/assets/logo.png",
@@ -36,13 +37,35 @@
             ]
         },
         "mac": {
-            "icon": "./src/assets/logo.icns"
+            "icon": "./src/assets/logo.icns",
+            "category": "public.app-category.utilities",
+            "entitlements": "entitlements.mac.plist",
+            "target": [
+                {
+                    "target": "dmg"
+                },
+                {
+                    "target": "pkg"
+                }
+            ]
         },
         "linux": {
             "icon": "./src/assets/logo.png",
             "target": [
                 {
                     "target": "deb"
+                },
+                {
+                    "target": "AppImage",
+                    "executableName": "prakphoto",
+                    "category": "System Utilities",
+                    "desktop": {
+                        "Name": "Prak Photo",
+                        "Exec": "prakphoto",
+                        "Icon": "./src/assets/logo.png",
+                        "Type": "Application",
+                        "Categories": "System Utilities",
+                    }
                 }
             ],
             "maintainer": "arancibiajav@gmail.com"
