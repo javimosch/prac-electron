@@ -1,6 +1,6 @@
 {
     "name": "prak-photo",
-    "version": "2.10.14",
+    "version": "2.10.15",
     "main": "dist/electron/main/index.js",
     "description": "Advanced file deduplication software",
     "author": "arancibiajav@gmail.com",
@@ -69,7 +69,7 @@
                 "Categories": "System Utilities"
             },
             "executableName": "prakphoto",
-            "maintainer":"arancibiajavas@gmail.com"
+            "maintainer": "arancibiajavas@gmail.com"
         },
         "directories": {
             "output": "release"
