@@ -57,18 +57,17 @@
                 },
                 {
                     "target": "AppImage",
-                    "executableName": "prakphoto",
-                    "category": "System Utilities",
-                    "desktop": {
-                        "Name": "Prak Photo",
-                        "Exec": "prakphoto",
-                        "Icon": "./src/assets/logo.png",
-                        "Type": "Application",
-                        "Categories": "System Utilities"
-                    }
                 }
             ],
-            "maintainer": "arancibiajav@gmail.com"
+            "category": "Utility",
+            "desktop": {
+                "Name": "Prak Photo",
+                "Exec": "prakphoto",
+                "Icon": "./src/assets/logo.png",
+                "Type": "Application",
+                "Categories": "System Utilities"
+            },
+            "executableName": "prakphoto"
         },
         "directories": {
             "output": "release"
@@ -86,6 +85,7 @@
         "cross-env": "^7.0.3",
         "electron": "^21.0.1",
         "electron-builder": "^23.1.0",
+        "husky": "^8.0.3",
         "jest": "^29.5.0",
         "modclean": "^3.0.0-beta.1",
         "pinia": "^2.0.28",
