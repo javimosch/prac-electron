@@ -5,15 +5,14 @@ import sequential from "./promiseSequence";
 import moment from "moment-timezone";
 import * as rra from "recursive-readdir-async";
 import customActions from "./customActions";
-import {processOptions, msToTime} from './helpers'
-
+import { processOptions, msToTime } from "./helpers";
 
 import scope from "./state";
 import { getLocalDB } from "./electron-store";
 
-import electronLog from 'electron-log'
+import electronLog from "electron-log";
 const isJest = process.env.NODE_ENV === "test";
-const consoleLog:any = isJest ? console :  electronLog
+const consoleLog: any = isJest ? console : electronLog;
 if (!isJest) {
   consoleLog.catchErrors({
     showDialog: true,
@@ -39,17 +38,15 @@ consoleLog.configure = function (options: any) {
   });
 };
 
-
 consoleLog.configure({
-  onConsoleMessage(message:any){
+  onConsoleMessage(message: any) {
     if (shouldSendConsoleEvent(message.level)) {
       sendEvent({
-        html: `<p><strong>${message.level}:&nbsp;</strong>${message.data}.</p>`
+        html: `<p><strong>${message.level}:&nbsp;</strong>${message.data}.</p>`,
       });
     }
-  }
-})
-
+  },
+});
 
 //Object.assign(console, consoleLog.functions);
 const mime = require("mime-types");
@@ -63,8 +60,6 @@ const shortid = require("shortid");
 const nanoid = async (len: number) => shortid.generate();
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
-
-
 
 let mainActionLabelVerb: { [index: string]: any } = {
   copy: "Copy",
@@ -280,15 +275,11 @@ ipcMain.handle("customAction", async (event, options = {}) => {
   }
 });
 
-
-
 function consoleLogDebug(str, obj: any) {
   consoleLog.debug("analyzeSources", JSON.stringify(obj, null, 4));
 }
 
 ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
-  
-
   const {
     hasMissingParameters,
     configurationName,
@@ -298,14 +289,14 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     isAnalysis,
     isDryRun,
     errors,
-    computedConfigId
+    computedConfigId,
   } = processOptions(sources, options);
 
-  if(hasMissingParameters){
-    consoleLog.info('Missing parameters',{
-      errors
-    })
-    return false
+  if (hasMissingParameters) {
+    consoleLog.info("Missing parameters", {
+      errors,
+    });
+    return false;
   }
 
   const db = getLocalDB(configurationName);
@@ -319,7 +310,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     sources,
   });
 
- 
   let configId = await db.get("id", computedConfigId);
 
   let duplicatedFiles = await db.get("duplicatedFiles", []);
@@ -329,13 +319,13 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   let targetFilesDupes = await db.get("targetFilesDupes", []);
 
   let isAnalysisComplete = await db.get("analysis", false);
-  let existingFilesInTargetDir: any[] =await  db.get(
+  let existingFilesInTargetDir: any[] = await db.get(
     "existingFilesInTargetDir",
     []
   );
 
   let hasInvalidCache =
-  isAnalysis ||
+    isAnalysis ||
     !isAnalysisComplete ||
     configId != computedConfigId ||
     (sourceFiles.length === 0 && uniqueFiles.length === 0);
@@ -378,7 +368,9 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       sources.map((sourcePath: string) => {
         return async () => {
           //files
-          let files = await rraListWrapper(
+          let filteredOutCount=0
+          let filteredOutExample = {}
+          await rraListWrapper(
             sourcePath,
             {
               mode: rra.LIST,
@@ -409,10 +401,19 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                 sourceFiles.push(obj);
                 return false;
               } else {
+                filteredOutCount++
+                filteredOutExample = {
+                  obj,
+                  include:options.include
+                }
                 return true;
               }
             }
           );
+          console.log("Filtered out",{
+            filteredOutCount,
+            filteredOutExample
+          })
         }; //();
       })
     );
@@ -609,11 +610,14 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
 
-    await db.set('sourceItems', sources.map((sourcePath: string) => {
-      return {
-        fullPath: sourcePath,
-      };
-    }));
+    await db.set(
+      "sourceItems",
+      sources.map((sourcePath: string) => {
+        return {
+          fullPath: sourcePath,
+        };
+      })
+    );
 
     await db.set("targetItem", {
       fullPath: options.targetDirectory,
@@ -858,8 +862,6 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
   return;
 });
 
-
-
 /** FUNCTIONS ---------------------------------------------*/
 
 /**
@@ -894,10 +896,11 @@ function getStatItem(obj: any, attr = "sourceStats") {
 
 function isFilteredFile(file: any, include: Array<any>) {
   return (
-    (!file.isDirectory && include.length === 0) ||
-    include.some(
-      (str: String) => str.toLowerCase() == file.extension.toLowerCase()
-    )
+    !file.isDirectory &&
+    (include.length === 0 ||
+      include.some(
+        (str: String) => str.toLowerCase().split('.').join('') == file.extension.toLowerCase().split('.').join('')
+      ))
   );
 }
 
@@ -1092,7 +1095,10 @@ function shouldSendConsoleEvent(level: string) {
   if (["error"].includes(level) && scope.logLevel === "error") {
     return true;
   }
-  if (["error", "warn", "info"].includes(level) && scope.logLevel === "normal") {
+  if (
+    ["error", "warn", "info"].includes(level) &&
+    scope.logLevel === "normal"
+  ) {
     return true;
   }
   if (
@@ -1231,7 +1237,3 @@ function getHTMLParagraph(text: String, title = "Info") {
   //consoleLog.log(`${title}: ${text}`);
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
 }
-
-
-
-

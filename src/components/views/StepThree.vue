@@ -8,7 +8,7 @@ import useLoadingBar from "@/composables/loading-bar";
 //import { storeToRefs } from "pinia";
 //import { useAppStore } from "@/stores/app";
 import { PrakStateSymbol } from "@/constants.js";
-
+import {extData} from '@/components/ExtensionsSelect.vue'
 //const appStore = useAppStore();
 //const {  } = storeToRefs(appStore);
 
@@ -86,7 +86,7 @@ function cleanAnalysisCache() {
 
 function normalizeExtensions(extensions) {
   if (extensions.value.some((v) => v === "all")) {
-    return [];
+    return extData.extensions.filter(ext=>ext!=='all');
   }
 
   return extensions.value

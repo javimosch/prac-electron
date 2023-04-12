@@ -65,7 +65,7 @@ export function processOptions(sources: any[], options: any) {
     hasMissingParameters = true;
   }
 
-  if (!options.targetDirectory) {
+  if (!options.targetDirectory && (isCopy || isClean)) {
     errors.push("Missing target directory");
     hasMissingParameters = true;
   }
