@@ -64,7 +64,7 @@
                         "Exec": "prakphoto",
                         "Icon": "./src/assets/logo.png",
                         "Type": "Application",
-                        "Categories": "System Utilities",
+                        "Categories": "System Utilities"
                     }
                 }
             ],
