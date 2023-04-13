@@ -35,8 +35,7 @@
                         "x64"
                     ]
                 }
-            ],
-            "certificateFile": "certificate.pfx"
+            ]
         },
         "mac": {
             "icon": "./src/assets/logo.icns",
