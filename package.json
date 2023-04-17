@@ -1,6 +1,6 @@
 {
     "name": "prak-photo",
-    "version": "2.10.16",
+    "version": "2.11.0",
     "main": "dist/electron/main/index.js",
     "description": "Advanced file deduplication software",
     "author": "arancibiajav@gmail.com",
@@ -20,14 +20,15 @@
         "bump:minor": "npx json-bump package.json --minor && git add package.json && git commit -m 'Bump version' && git push origin master",
         "bump:patch": "npx json-bump package.json --patch && git add package.json && git commit -m 'Bump version' && git push origin master",
         "test": "jest",
-        "prepare": "husky install"
+        "prepare": "husky install",
+        "icon": "npx eib  -i ./src/assets/icons/1024x1024.png -o ./resources"
     },
     "build": {
         "appId": "com.lunardog.prakelectron",
         "productName": "Prak Photo",
         "asar": true,
+        "compression": "store",
         "win": {
-            "icon": "./src/assets/logo.png",
             "target": [
                 {
                     "target": "nsis",
@@ -38,7 +39,6 @@
             ]
         },
         "mac": {
-            "icon": "./src/assets/logo.icns",
             "category": "public.app-category.utilities",
             "entitlements": "entitlements.mac.plist",
             "target": [
@@ -51,7 +51,6 @@
             ]
         },
         "linux": {
-            "icon": "./src/assets/logo.png",
             "target": [
                 {
                     "target": "deb"
@@ -63,7 +62,6 @@
             "category": "Utility",
             "desktop": {
                 "Name": "Prak Photo",
-                "Icon": "./src/assets/logo.png",
                 "Type": "Application",
                 "Categories": "System Utilities"
             },
@@ -71,13 +69,30 @@
             "maintainer": "arancibiajavas@gmail.com"
         },
         "directories": {
-            "output": "release"
-        }
+            "output": "release",
+            "buildResources": "resources"
+        },
+        "files": [
+            "dist/**/*",
+            "resources/**/*",
+            "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+            "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+            "!**/node_modules/*.d.ts",
+            "!**/node_modules/.bin",
+            "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+            "!.editorconfig",
+            "!**/._*",
+            "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+            "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+            "!**/{appveyor.yml,.travis.yml,circle.yml}",
+            "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+        ]
     },
     "engines": {
         "node": ">=14.17.0"
     },
     "devDependencies": {
+        "@hunlongyu/electron-icon-builder": "^0.1.5",
         "@types/jest": "^29.4.2",
         "@vicons/material": "^0.12.0",
         "@vicons/utils": "^0.1.4",
