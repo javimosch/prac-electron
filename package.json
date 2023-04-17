@@ -10,6 +10,7 @@
     "private": true,
     "scripts": {
         "dev": "VITE_DEV_SERVER_URL=localhost vite",
+        "buildd":"npx cross-env NODE_ENV=production vite build && npx electron-builder",
         "build": "cross-env NODE_ENV=production vue-tsc --noEmit && vite build && electron-builder",
         "build:docker": "npm ci && npx modclean --run && cross-env NODE_ENV=production vite build && electron-builder",
         "release": "git push origin master && git push gh master:main",
@@ -21,13 +22,13 @@
         "bump:patch": "npx json-bump package.json --patch && git add package.json && git commit -m 'Bump version' && git push origin master",
         "test": "jest",
         "prepare": "husky install",
-        "icon": "npx eib  -i ./src/assets/icons/1024x1024.png -o ./resources"
+        "icon": "npx eib  -i ./src/assets/icons/1024x1024.png -o ./resources --flatten"
     },
     "build": {
         "appId": "com.lunardog.prakelectron",
         "productName": "Prak Photo",
         "asar": true,
-        "compression": "store",
+        "compression": "normal",
         "win": {
             "target": [
                 {
@@ -51,6 +52,7 @@
             ]
         },
         "linux": {
+            "icon":"./resources/256x256.png",
             "target": [
                 {
                     "target": "deb"
@@ -100,7 +102,7 @@
         "@vue/devtools": "^6.5.0",
         "cross-env": "^7.0.3",
         "electron": "^21.0.1",
-        "electron-builder": "^23.1.0",
+        "electron-builder": "^24.2.1",
         "husky": "^8.0.0",
         "jest": "^29.5.0",
         "modclean": "^3.0.0-beta.1",
