@@ -377,6 +377,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
     //=== SOURCE DIRECTORY === START =================================
     //let readResultsPartial: any = [];
+
+    let track = getTimeTracker('find-source-files')
     sourceFiles = [];
     await sequential(
       sources.map((sourcePath: string) => {
@@ -431,6 +433,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         }; //();
       })
     );
+    track.stop()
     /* consoleLog.debug({
       readResults,
     });*/
@@ -452,7 +455,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
 
     let processingPercentAnimate = processingPercent;
 
-    let track = getTimeTracker('hashing-source-files')
+    track = getTimeTracker('hashing-source-files')
     const hashBatchSize = 100;
     await splitOperation({
       sequential: true,
@@ -642,8 +645,12 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     );*/
 
     console.log("Calculate dupes in source directory");
+    
+    track = getTimeTracker('compute-duplicated-files-in-source-dirs-part-1')
     duplicatedFiles = getDuplicatedFiles(sourceFiles, options.removePriority);
+    track.stop()
 
+    track = getTimeTracker('compute-duplicated-files-in-source-dirs-part-2')
     duplicatedFiles.forEach((dupeFile: any) => {
       let statItem = getStatItem(dupeFile, "sourceStats");
       statItem.dupesCount++;
@@ -652,12 +659,14 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         sourceStats: scope.analysisStats.sourceStats,
       });
     });
+    track.stop()
 
     consoleLog.info({
       uniqueFilesCount: uniqueFiles.length,
       duplicatedFilesCount: duplicatedFiles.length,
     });
 
+    track = getTimeTracker('compute-rename')
     const renamedCount = 0;
     uniqueFiles.forEach((file: any, index: number) => {
       let hasSomeWithSameName = uniqueFiles.some(
@@ -677,13 +686,14 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         );*/
       }
     });
-
     consoleLog.info(`${renamedCount} files will be renamed`);
+    track.stop()
 
     consoleLog.info(
       `${uniqueFiles.length} unique files detected (After checking duplicates in target directory)`
     );
 
+    track = getTimeTracker('db-operations')
     await db.set(
       "sourceItems",
       sources.map((sourcePath: string) => {
@@ -705,6 +715,7 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
     await db.set("timestamp", moment().toDate().getTime());
     await db.set("date", moment().format("YYYY-MM-DD HH:mm:ss"));
     await db.set("id", configId);
+    track.stop()
     consoleLog.log("Analysis successful", configId);
   } else {
     consoleLog.info("Restoring analysis");
@@ -968,8 +979,14 @@ function getStatItem(obj: any, attr = "sourceStats") {
   return statItem;
 }
 
+function bytesToMb(bytes) {
+  return parseFloat((bytes / 1048576).toFixed(2)); // 1024 * 1024
+}
+
 function isFilteredFile(file: any, include: Array<any>) {
+  let size = bytesToMb(file.stats.size)
   return (
+    size<=1024&& //Limit to 1gb files for perf 
     !file.isDirectory &&
     (include.length === 0 ||
       include.some(
@@ -1352,34 +1369,30 @@ export async function splitOperation(options: any = {}) {
 
 function getTimeTracker(text = 'trackTime', enabled = true) {
   const state = {}
-  const logger = {
+  const tracker = {
     startTime: Date.now(),
-    trackTime: function () {
+    stopAndPrintElapsed: function () {
       let endTime = Date.now()
-      let elapsedTime = endTime - logger.startTime
+      let elapsedTime = endTime - tracker.startTime
       let hours = Math.floor(elapsedTime / 3600000)
       let minutes = Math.floor((elapsedTime % 3600000) / 60000)
       let seconds = Math.floor((elapsedTime % 60000) / 1000)
-      console.log(
-        `time-tracker::e (${text}) elapsed: ${hours}:${minutes}:${seconds}`,
+      consoleLog.log(
+        `time-tracker::e (${text}) elapsed: ${hours}:${minutes}:${seconds} raw-diff(${elapsedTime})`,
         state
       )
       return this
-    },
-    stop: function () {
-      logger.trackTime()
-      return this
-    },
+    }
   }
-  console.log(`time-tracker::s (${text})`)
+  consoleLog.log(`time-tracker::s (${text}) (${tracker.startTime})`)
   let scope = {
     stop: function stop() {
       if (!enabled) {
         return
       }
-      logger.stop()
+      tracker.stopAndPrintElapsed()
     },
-    count : (txt, sample = {}) => {
+    count : (txt:string, sample:any = {}) => {
       if (!enabled) {
         return
       }
