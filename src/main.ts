@@ -10,9 +10,12 @@ import StepTwo from "./components/views/StepTwo.vue";
 import StepThree from "./components/views/StepThree.vue";
 import CreateAccountView from './components/CreateAccountView.vue'
 import Home from './components/views/Home.vue';
+//import Home from './components/Modal.vue';
 import VueSortable from "vue3-sortablejs";
 import Settings from './components/views/Settings.vue'
 import * as analytics from './analytics.js'
+import 'virtual:uno.css'
+
 
 // General Font
 //import "vfonts/Lato.css";

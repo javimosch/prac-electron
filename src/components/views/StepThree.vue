@@ -185,8 +185,9 @@ const handleRemovePriorityChange = (e) => {
 //StepOneBar(@click="canSwitchView&&$emit('gotoStep','SourceTargetView')" :style="canSwitchView?'cursor:pointer':''")
 Layout
   .h-layout
+    
     .left-layout
-      
+      LoadingBar.loading-bar( :percent="processingPercent")         
       .grid-h-50(style="margin-bottom:20px;")
         div
           SourceFoldersSelector
@@ -274,7 +275,7 @@ Layout
         label Target  
         AnalysisExtensionsStats(:stats="stats.targetStats")
       
-  LoadingBar.loading-bar( :percent="processingPercent")       
+  
   //OverviewText 
 </template>
 <style lang="scss" scoped>

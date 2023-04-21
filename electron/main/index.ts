@@ -11,6 +11,7 @@ import scope from "./state";
 import { getLocalDB } from "./electron-store";
 
 import electronLog from "electron-log";
+
 const isJest = process.env.NODE_ENV === "test";
 const consoleLog: any = isJest ? console : electronLog;
 if (!isJest) {
@@ -52,7 +53,7 @@ consoleLog.configure({
 const mime = require("mime-types");
 const path = require("path");
 const cfg = require("electron-cfg");
-const md5File = require("md5-file");
+
 const emptyDir = require("empty-dir");
 const sander = require("sander");
 const isProduction = process.env.NODE_ENV === "production";
@@ -60,6 +61,19 @@ const shortid = require("shortid");
 const nanoid = async (len: number) => shortid.generate();
 //quire("amd-loader");
 //var readfiles = require("node-readfiles");
+
+const md5File = require("md5-file");
+
+var sha256File = require("sha256-file");
+
+async function hashFile(filePath) {
+  return new Promise((resolve, reject) => {
+    sha256File(filePath, function (error, sum) {
+      if (error) return reject(error);
+      resolve(sum);
+    });
+  });
+}
 
 let mainActionLabelVerb: { [index: string]: any } = {
   copy: "Copy",
@@ -368,8 +382,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       sources.map((sourcePath: string) => {
         return async () => {
           //files
-          let filteredOutCount=0
-          let filteredOutExample = {}
+          let filteredOutCount = 0;
+          let filteredOutExample = {};
           await rraListWrapper(
             sourcePath,
             {
@@ -401,19 +415,19 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
                 sourceFiles.push(obj);
                 return false;
               } else {
-                filteredOutCount++
+                filteredOutCount++;
                 filteredOutExample = {
                   obj,
-                  include:options.include
-                }
+                  include: options.include,
+                };
                 return true;
               }
             }
           );
-          console.log("Filtered out",{
+          console.log("Filtered out", {
             filteredOutCount,
-            filteredOutExample
-          })
+            filteredOutExample,
+          });
         }; //();
       })
     );
@@ -432,9 +446,67 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
       processingPercent,
     });
 
-    consoleLog.info("Generating source files MD5");
+    consoleLog.info("Generating source files MD5", {
+     // filePaths: sourceFiles.map((file: any) => file.fullname),
+    });
 
     let processingPercentAnimate = processingPercent;
+
+    let track = getTimeTracker('hashing-source-files')
+    const hashBatchSize = 100;
+    await splitOperation({
+      sequential: true,
+      generateSubsets() {
+        let subsets: any[] = [];
+        let subset: any = [];
+        sourceFiles.forEach((file: any, fileIndex: number) => {
+          let wrapper = {
+            fileIndex,
+            hash: "",
+          };
+          if (subset.length < hashBatchSize) {
+            subset.push(wrapper);
+          } else {
+            subsets.push(subset);
+            subset = [wrapper];
+          }
+        });
+
+        subsets.push(subset);
+
+        return subsets;
+      },
+      async handleSubset(subset, subsetIndex) {
+        await Promise.all(
+          subset.map((wrapper, index) => {
+            return (async () => {
+              let file = sourceFiles[wrapper.fileIndex];
+              let hash = await hashFile(file.fullname);
+              //let hash = await md5File(wrapper.file.fullname);
+              file.md5 = hash;
+              file.uniqueId = await nanoid(5);
+              processingPercent = Math.round(
+                processingPercentAnimate +
+                  20 *
+                    ((subsetIndex * hashBatchSize + index + 1) /
+                      sourceFiles.length)
+              );
+              sendEvent({
+                processingPercent,
+                processingMessage: "Generating source files hashes...",
+              });
+            })();
+          })
+        );
+      },
+    });
+    track.stop()
+
+    /*console.log({
+      hashes: sourceFiles.map((file: any) => file.md5),
+    });*/
+
+    /*
     await sequential(
       sourceFiles.map((file: any, index: number) => {
         return async () => {
@@ -453,6 +525,8 @@ ipcMain.handle("analyzeSources", async (event, sources = [], options = {}) => {
         }; //();
       })
     );
+*/
+
     processingPercentAnimate = processingPercent;
 
     sendEvent({
@@ -899,7 +973,9 @@ function isFilteredFile(file: any, include: Array<any>) {
     !file.isDirectory &&
     (include.length === 0 ||
       include.some(
-        (str: String) => str.toLowerCase().split('.').join('') == file.extension.toLowerCase().split('.').join('')
+        (str: String) =>
+          str.toLowerCase().split(".").join("") ==
+          file.extension.toLowerCase().split(".").join("")
       ))
   );
 }
@@ -1236,4 +1312,81 @@ async function tryCatchAsync(
 function getHTMLParagraph(text: String, title = "Info") {
   //consoleLog.log(`${title}: ${text}`);
   return `<p><strong>${title}:&nbsp;</strong>${text}.</p>`;
+}
+
+/**
+ * Generic helper for progresive searchs.
+ *
+ * Used to split heavy requests without pagination support (Geored APIV2).
+ *
+ * @param {Function} options.generateSubsets Handler to generate subsets
+ * @param {Function} options.handleSubsets Handler to process and resolve subsets
+ * @param {Function} options.withSubsetResult Handler to control a subset result
+ * @param {Boolean} options.sequential Subsets will resolve sequentially
+ */
+export async function splitOperation(options: any = {}) {
+  const sequential = require("promise-sequential");
+  let subsets = options.generateSubsets();
+  if (options.sequential === true) {
+    return await sequential(
+      subsets.map((subset, subsetIndex) => {
+        return async () => {
+          let r = await options.handleSubset(subset, subsetIndex);
+          options.withSubsetResult && options.withSubsetResult(r, subset);
+          return r;
+        };
+      })
+    );
+  } else {
+    return await Promise.all(
+      subsets.map((subset, subsetIndex) =>
+        (async () => {
+          let r = await options.handleSubset(subset, subsetIndex);
+          options.withSubsetResult && options.withSubsetResult(r, subset);
+          return r;
+        })()
+      )
+    );
+  }
+}
+
+function getTimeTracker(text = 'trackTime', enabled = true) {
+  const state = {}
+  const logger = {
+    startTime: Date.now(),
+    trackTime: function () {
+      let endTime = Date.now()
+      let elapsedTime = endTime - logger.startTime
+      let hours = Math.floor(elapsedTime / 3600000)
+      let minutes = Math.floor((elapsedTime % 3600000) / 60000)
+      let seconds = Math.floor((elapsedTime % 60000) / 1000)
+      console.log(
+        `time-tracker::e (${text}) elapsed: ${hours}:${minutes}:${seconds}`,
+        state
+      )
+      return this
+    },
+    stop: function () {
+      logger.trackTime()
+      return this
+    },
+  }
+  console.log(`time-tracker::s (${text})`)
+  let scope = {
+    stop: function stop() {
+      if (!enabled) {
+        return
+      }
+      logger.stop()
+    },
+    count : (txt, sample = {}) => {
+      if (!enabled) {
+        return
+      }
+      state[txt] = state[txt] || 0
+      state[txt]++
+      state[txt + '_sample'] = state[txt + '_sample'] || sample
+    }
+  }
+  return scope
 }

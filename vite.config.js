@@ -7,6 +7,8 @@ import pkg from "./package.json";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import path from 'path';
+import UnoCSS from 'unocss/vite'
+
 rmSync("dist", { recursive: true, force: true }); // v14.14.0
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -23,6 +25,9 @@ export default defineConfig({
         /* options */
         }),
         vue(),
+        UnoCSS({
+            configFile: './uno.config.js',
+        }),
         electron({
             main: {
                 entry: "electron/main/index.ts",
