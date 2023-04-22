@@ -287,6 +287,22 @@ ipcMain.handle("customAction", async (event, options = {}) => {
       hasAnalysisCache: false,
     });
   }
+
+  if(options.name==='getSourceFiles'){
+    const db = getLocalDB(options.configurationName);
+    let sourceFiles = await db.get("sourceFiles", []);
+    let duplicatedFiles = await db.get("duplicatedFiles", []);
+    return sourceFiles.filter((file:any)=>{
+      return file.extension.split('.').join('').toLowerCase()==options.ext.toLowerCase()
+    }).map((file:any)=>{
+      return {
+        file: file.fullname,
+        willRemove: duplicatedFiles.some(f=>f.uniqueId===file.uniqueId)
+        //details: {...file}
+      }
+    })
+  }
+
 });
 
 function consoleLogDebug(str, obj: any) {

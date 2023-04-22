@@ -151,7 +151,9 @@
         "sha256-file": "^1.0.0",
         "shortid": "^2.2.16",
         "ts-node": "^10.9.1",
+        "vue-json-pretty": "^2.2.4",
         "vue-router": "^4.1.6",
+        "vue3-hotkey": "^1.0.3",
         "vue3-sortablejs": "^1.0.6",
         "xhr2": "^0.2.1",
         "zod": "^3.21.4"

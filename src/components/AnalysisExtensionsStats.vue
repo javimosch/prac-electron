@@ -7,7 +7,7 @@
         div.value Dupes size
         div.value Size
     .body-scroll
-      .section.values(v-for="stat in props.stats")
+      .section.values(v-for="stat in props.stats" @click="()=>$emit('clickRow',{...stat})")
           div.ext {{stat.ext.toUpperCase()}}
           div.value {{stat.count||0}}
           div.value {{stat.dupesCount||0}}

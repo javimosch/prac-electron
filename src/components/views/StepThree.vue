@@ -8,9 +8,23 @@ import useLoadingBar from "@/composables/loading-bar";
 //import { storeToRefs } from "pinia";
 //import { useAppStore } from "@/stores/app";
 import { PrakStateSymbol } from "@/constants.js";
-import {extData} from '@/components/ExtensionsSelect.vue'
+import { extData } from "@/components/ExtensionsSelect.vue";
 //const appStore = useAppStore();
 //const {  } = storeToRefs(appStore);
+
+import useHotkey from "vue3-hotkey";
+
+const hotkeys = ref([
+  {
+    keys: ["Escape"],
+    preventDefault: true,
+    handler(keys) {
+      
+      modal.value = false;
+    },
+  },
+]);
+const stopHotKeys = useHotkey(hotkeys.value);
 
 const {
   sourceFolders,
@@ -75,6 +89,11 @@ onMounted(() => {
   }
 });
 onUnmounted(() => {
+  
+  try{
+    (stopHotKeys||[]).forEach(s=>s())
+  }catch(err){}
+
   unbindOnEvent();
 });
 
@@ -86,7 +105,7 @@ function cleanAnalysisCache() {
 
 function normalizeExtensions(extensions) {
   if (extensions.value.some((v) => v === "all")) {
-    return extData.extensions.filter(ext=>ext!=='all');
+    return extData.extensions.filter((ext) => ext !== "all");
   }
 
   return extensions.value
@@ -118,11 +137,10 @@ async function executeAnalysis(isAnalysis = false) {
 
   await window.electronAPI.analyzeSources([...sourceFolders.value], options);
 
-  
   analytics.trackAction("execute", {
     type: isAnalysis ? "scan" : options.mainAction,
     options,
-    stats:{...stats.value}
+    stats: { ...stats.value },
   });
 
   isLoading.value = false;
@@ -178,11 +196,35 @@ let canRunMainAction = computed({
 const handleRemovePriorityChange = (e) => {
   removePriority.value = e.target.value;
 };
+const modal = ref(false);
+const json = ref([]);
+const jsonSearch = ref("")
+const filteredJson = computed(()=>{
+  return json.value.filter(item=>{
+    return !jsonSearch.value || item.file.toLowerCase().includes(jsonSearch.value)
+  })
+})
+async function onClickRow(stat) {
+  modal.value = true;
+
+  let files = await window.electronAPI.customAction({
+    name: "getSourceFiles",
+    ext: stat.ext
+  });
+  console.log({
+    stat,
+    files
+  })
+  json.value = files
+}
 </script>
 
 <template lang="pug">
 //StepZeroBar(@click="canSwitchView&& $emit('gotoStep','StartView')" :style="canSwitchView?'cursor:pointer':''")
 //StepOneBar(@click="canSwitchView&&$emit('gotoStep','SourceTargetView')" :style="canSwitchView?'cursor:pointer':''")
+Modal(v-show="modal" @clickOverlay="()=>modal=false")
+  input(v-model="jsonSearch" placeholder="Contains...")
+  JSONViewer(v-model="filteredJson")
 Layout
   .h-layout
     
@@ -194,7 +236,7 @@ Layout
         div
           ExtensionsSelect
       
-      AnalysisExtensionsStats(:stats="stats.sourceStats")
+      AnalysisExtensionsStats(:stats="stats.sourceStats" @clickRow="onClickRow")
 
       //div
         label Source
