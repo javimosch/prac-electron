@@ -199,8 +199,12 @@ const handleRemovePriorityChange = (e) => {
 const modal = ref(false);
 const json = ref([]);
 const jsonSearch = ref("")
+const jsonWillRemove = ref(false)
 const filteredJson = computed(()=>{
   return json.value.filter(item=>{
+    if(item.willRemove!==jsonWillRemove.value){
+      return false
+    }
     return !jsonSearch.value || item.file.toLowerCase().includes(jsonSearch.value)
   })
 })
@@ -224,6 +228,10 @@ async function onClickRow(stat) {
 //StepOneBar(@click="canSwitchView&&$emit('gotoStep','SourceTargetView')" :style="canSwitchView?'cursor:pointer':''")
 Modal(v-show="modal" @clickOverlay="()=>modal=false")
   input(v-model="jsonSearch" placeholder="Contains...")
+  div
+    label Will remove
+    input(type="checkbox" v-model="jsonWillRemove")
+  p Filtered files: {{filteredJson.length}}
   JSONViewer(v-model="filteredJson")
 Layout
   .h-layout
